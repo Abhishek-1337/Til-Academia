@@ -1,0 +1,16 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Til {
+  id        String   @id @default(uuid())
+  raw       String
+  formatted String
+  tags      String[]
+  createdAt DateTime @default(now())
+}
