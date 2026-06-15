@@ -6,25 +6,26 @@ export interface Til {
   createdAt: number
 }
 
-export function getTils(): Til[] {
-  if (typeof window === "undefined") return []
-  try {
-    const data = localStorage.getItem("tils")
-    return data ? JSON.parse(data) : []
-  } catch {
-    return []
-  }
+export async function getTils(topic?: string | null): Promise<Til[]> {
+  const params = topic ? `?topic=${encodeURIComponent(topic)}` : ""
+  const res = await fetch(`/api/tils${params}`)
+  if (!res.ok) throw new Error("Failed to fetch TILs")
+  return res.json()
 }
 
-export function saveTil(til: Til) {
-  const tils = getTils()
-  tils.unshift(til)
-  localStorage.setItem("tils", JSON.stringify(tils))
+export async function saveTil(til: Omit<Til, "id" | "createdAt">): Promise<Til> {
+  const res = await fetch("/api/tils", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(til),
+  })
+  if (!res.ok) throw new Error("Failed to save TIL")
+  return res.json()
 }
 
-export function deleteTil(id: string) {
-  const tils = getTils().filter((t) => t.id !== id)
-  localStorage.setItem("tils", JSON.stringify(tils))
+export async function deleteTil(id: string): Promise<void> {
+  const res = await fetch(`/api/tils/${id}`, { method: "DELETE" })
+  if (!res.ok) throw new Error("Failed to delete TIL")
 }
 
 export function getApiKey(): string {

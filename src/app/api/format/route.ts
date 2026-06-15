@@ -16,14 +16,14 @@ export async function POST(req: Request) {
 Given raw notes from a user, rewrite them into a clear, well-structured TIL entry.
 
 Rules:
-- Use markdown formatting
-- Put terminal commands, code, and file paths in inline code or code blocks
-- Add brief context or explanations where the user's notes are sparse
-- Organize with headings (##) for different topics if there are multiple
+- Return ONLY GitHub-flavored Markdown (no preamble, no commentary)
+- Use markdown headings with ## for major sections (H2)
+- Use bullet lists where appropriate
+- Use triple-backtick fenced code blocks for code (include language when known)
+- Put inline code in backticks
+- Add a one-line bold summary at the top (first line), like: **Summary...**
 - Keep it concise but complete
-- Add a one-line summary at the top in bold as the title
-- Do NOT use emojis
-- Return ONLY the formatted markdown, no preamble or commentary`
+- Do NOT use emojis`
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -61,3 +61,4 @@ Rules:
     )
   }
 }
+

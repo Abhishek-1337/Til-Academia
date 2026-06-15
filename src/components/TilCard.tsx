@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import type { Til } from "@/lib/store"
+import { renderMarkdownToHtml } from "@/lib/markdown"
 
 interface TilCardProps {
   til: Til
@@ -57,39 +58,15 @@ export default function TilCard({ til, onDelete }: TilCardProps) {
         </pre>
       )}
 
-      <div
-        className="prose prose-sm max-w-none dark:prose-invert [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-gray-100 [&_pre]:p-3 [&_pre]:text-sm dark:[&_pre]:bg-gray-800 [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-sm [&_code]:font-mono dark:[&_code]:bg-gray-800"
-        dangerouslySetInnerHTML={{ __html: renderMarkdown(til.formatted) }}
-      />
+      <div className="mt-1 rounded-xl bg-gray-50 p-4 dark:bg-gray-900">
+        <div
+          className="prose prose-sm max-w-none dark:prose-invert prose-p:leading-relaxed [&_pre]:overflow-x-auto"
+          dangerouslySetInnerHTML={{
+            __html: renderMarkdownToHtml(til.formatted),
+          }}
+        />
+      </div>
     </div>
   )
 }
 
-function renderMarkdown(md: string): string {
-  let html = md
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-
-  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-    const langClass = lang ? ` class="language-${lang}"` : ""
-    return `<pre${langClass}><code>${code.trim()}</code></pre>`
-  })
-
-  html = html.replace(
-    /`([^`]+)`/g,
-    '<code class="bg-gray-100 dark:bg-gray-800 rounded px-1 py-0.5 text-sm font-mono">$1</code>'
-  )
-
-  html = html.replace(/^### (.+)$/gm, "<h3 class='text-base font-semibold mt-4 mb-2'>$1</h3>")
-  html = html.replace(/^## (.+)$/gm, "<h2 class='text-lg font-semibold mt-5 mb-2'>$1</h2>")
-  html = html.replace(/^\*\*(.+?)\*\*$/gm, "<strong>$1</strong>")
-  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-
-  html = html.replace(/^- (.+)$/gm, "<li class='ml-4 list-disc'>$1</li>")
-
-  html = html.replace(/\n\n/g, "</p><p class='mb-2 leading-relaxed'>")
-  html = "<p class='mb-2 leading-relaxed'>" + html + "</p>"
-
-  return html
-}

@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { getTils, deleteTil } from "@/lib/store"
+import { useEffect, useMemo, useState, useCallback } from "react"
+import { deleteTil, getTils } from "@/lib/store"
 import type { Til } from "@/lib/store"
 import TilCard from "./TilCard"
 
@@ -13,30 +13,54 @@ interface TilListProps {
 
 export default function TilList({ refreshKey, selectedTopic, onTilsChange }: TilListProps) {
   const [tils, setTils] = useState<Til[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const all = await getTils()
+      setTils(all)
+      onTilsChange(all)
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false)
+    }
+  }, [onTilsChange])
 
   useEffect(() => {
-    const all = getTils()
-    setTils(all)
-    onTilsChange(all)
-  }, [refreshKey, onTilsChange])
+    load()
+  }, [load, refreshKey])
 
-  const filtered = selectedTopic
-    ? tils.filter((t) => t.tags.includes(selectedTopic))
-    : tils
+  const filtered = useMemo(() => {
+    return selectedTopic ? tils.filter((t) => t.tags.includes(selectedTopic)) : tils
+  }, [selectedTopic, tils])
 
-  const handleDelete = (id: string) => {
-    deleteTil(id)
-    setTils((prev) => {
-      const next = prev.filter((t) => t.id !== id)
-      onTilsChange(next)
-      return next
-    })
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteTil(id)
+      setTils((prev) => {
+        const next = prev.filter((t) => t.id !== id)
+        onTilsChange(next)
+        return next
+      })
+    } catch {
+      // ignore
+    }
+  }
+
+  if (loading) {
+    return (
+      <p className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+        Loading...
+      </p>
+    )
   }
 
   if (tils.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
-        No TILs yet. Write your first one above!
+        No entries saved yet.
       </p>
     )
   }
@@ -44,7 +68,7 @@ export default function TilList({ refreshKey, selectedTopic, onTilsChange }: Til
   if (filtered.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
-        No TILs with this topic.
+        No entries with topic &ldquo;{selectedTopic}&rdquo;.
       </p>
     )
   }

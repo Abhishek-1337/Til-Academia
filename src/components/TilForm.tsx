@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react"
 import { getApiKey, saveTil } from "@/lib/store"
-import type { Til } from "@/lib/store"
 import RichEditor from "./RichEditor"
 import TagInput from "./TagInput"
 import TurndownService from "turndown"
@@ -11,18 +10,20 @@ const turndown = new TurndownService({ headingStyle: "atx" })
 
 interface TilFormProps {
   onSaved: () => void
+  initialMode?: "raw" | "manual"
 }
 
 type Mode = "raw" | "manual"
 
-export default function TilForm({ onSaved }: TilFormProps) {
-  const [mode, setMode] = useState<Mode>("raw")
+export default function TilForm({ onSaved, initialMode }: TilFormProps) {
+  const [mode, setMode] = useState<Mode>(initialMode || "raw")
   const [raw, setRaw] = useState("")
   const [html, setHtml] = useState("")
   const [tags, setTags] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [saved, setSaved] = useState(false)
+
+  const apiKey = getApiKey()
 
   const handleAiSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,15 +51,12 @@ export default function TilForm({ onSaved }: TilFormProps) {
         throw new Error(data.error || "Failed to format")
       }
 
-      const til: Til = {
-        id: crypto.randomUUID(),
+      await saveTil({
         raw: raw.trim(),
         formatted: data.formatted,
         tags,
-        createdAt: Date.now(),
-      }
+      })
 
-      saveTil(til)
       setRaw("")
       setTags([])
       onSaved()
@@ -69,7 +67,7 @@ export default function TilForm({ onSaved }: TilFormProps) {
     }
   }
 
-  const handleManualSave = useCallback(() => {
+  const handleManualSave = useCallback(async () => {
     if (!html.trim()) return
 
     const text = html.replace(/<[^>]*>/g, "").trim()
@@ -80,46 +78,52 @@ export default function TilForm({ onSaved }: TilFormProps) {
 
     const markdown = turndown.turndown(html)
 
-    const til: Til = {
-      id: crypto.randomUUID(),
-      raw: text,
-      formatted: markdown,
-      tags,
-      createdAt: Date.now(),
-    }
+    try {
+      await saveTil({
+        raw: text,
+        formatted: markdown,
+        tags,
+      })
 
-    saveTil(til)
-    setHtml("")
-    setTags([])
-    setError("")
-    onSaved()
+      setHtml("")
+      setTags([])
+      setError("")
+      onSaved()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong")
+    }
   }, [html, tags, onSaved])
 
   return (
     <div className="mb-8">
-      <div className="mb-4 flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
-        <button
-          type="button"
-          onClick={() => setMode("raw")}
-          className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-            mode === "raw"
-              ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100"
-              : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          }`}
-        >
-          AI Format
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("manual")}
-          className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-            mode === "manual"
-              ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100"
-              : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          }`}
-        >
-          Manual
-        </button>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="text-sm text-gray-500 dark:text-gray-400">
+          {mode === "raw"
+            ? "Paste raw notes and let AI format them."
+            : "Write directly with the rich text editor."}
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (mode === "manual") {
+                if (!apiKey) {
+                  setError("Please set your OpenAI API key first")
+                  return
+                }
+                setError("")
+              }
+              setMode(mode === "raw" ? "manual" : "raw")
+            }}
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              mode === "raw"
+                ? "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
+          >
+            {mode === "raw" ? "Manual Entry" : "AI Parse"}
+          </button>
+        </div>
       </div>
 
       {mode === "raw" ? (
@@ -129,7 +133,7 @@ export default function TilForm({ onSaved }: TilFormProps) {
               htmlFor="raw-input"
               className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              What did you learn today?
+              Paste your raw notes
             </label>
             <textarea
               id="raw-input"
