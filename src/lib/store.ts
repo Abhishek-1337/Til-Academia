@@ -8,13 +8,13 @@ export interface Til {
 
 export async function getTils(topic?: string | null): Promise<Til[]> {
   const params = topic ? `?topic=${encodeURIComponent(topic)}` : ""
-  const res = await fetch(`/app2/api/tils${params}`)
+  const res = await fetch(`/api/tils${params}`)
   if (!res.ok) throw new Error("Failed to fetch TILs")
   return res.json()
 }
 
 export async function saveTil(til: Omit<Til, "id" | "createdAt">): Promise<Til> {
-  const res = await fetch("/app2/api/tils", {
+  const res = await fetch("/api/tils", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(til),
@@ -24,7 +24,7 @@ export async function saveTil(til: Omit<Til, "id" | "createdAt">): Promise<Til> 
 }
 
 export async function deleteTil(id: string): Promise<void> {
-  const res = await fetch(`/app2/api/tils/${id}`, { method: "DELETE" })
+  const res = await fetch(`/api/tils/${id}`, { method: "DELETE" })
   if (!res.ok) throw new Error("Failed to delete TIL")
 }
 

@@ -1,20 +1,57 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import type { Til } from "@/lib/store"
-
-export const ALL_TOPICS = "__all__"
 
 interface SidebarProps {
   tils: Til[]
-  selectedTopic: string | null
-  onSelectTopic: (topic: string | null) => void
+  selectedTilId: string | null
+  onSelectTil: (id: string | null) => void
   onCreateNew: (mode: "raw" | "manual") => void
 }
 
-export default function Sidebar({ tils, selectedTopic, onSelectTopic, onCreateNew }: SidebarProps) {
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, "")
+}
+
+const MS_PER_DAY = 86400000
+
+function getDateLabel(timestamp: number): string {
+  const now = new Date()
+  const date = new Date(timestamp)
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const entry = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const diff = Math.round((today.getTime() - entry.getTime()) / MS_PER_DAY)
+
+  if (diff === 0) return "Today"
+  if (diff === 1) return "Yesterday"
+  if (diff < 7) return "This Week"
+  if (diff < 14) return "Last Week"
+  if (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth()) return "This Month"
+  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+}
+
+function getDateGroupOrder(label: string): number {
+  const order: Record<string, number> = {
+    "Today": 0,
+    "Yesterday": 1,
+    "This Week": 2,
+    "Last Week": 3,
+    "This Month": 4,
+  }
+  return order[label] ?? 5
+}
+
+const DATE_FILTERS = ["Today", "Yesterday", "This Week", "Last Week", "This Month"] as const
+type DateFilter = (typeof DATE_FILTERS)[number]
+
+export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew }: SidebarProps) {
   const [query, setQuery] = useState("")
+  const [dateFilter, setDateFilter] = useState<DateFilter | null>(null)
   const [showNewMenu, setShowNewMenu] = useState(false)
+  const [isDark, setIsDark] = useState(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+  )
   const desktopMenuRef = useRef<HTMLDivElement>(null)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
 
@@ -34,27 +71,83 @@ export default function Sidebar({ tils, selectedTopic, onSelectTopic, onCreateNe
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const topicCounts = new Map<string, number>()
-  for (const til of tils) {
-    for (const tag of til.tags) {
-      topicCounts.set(tag, (topicCounts.get(tag) || 0) + 1)
+  const toggleTheme = () => {
+    const next = !isDark
+    setIsDark(next)
+    document.documentElement.classList.toggle("dark", next)
+    localStorage.setItem("theme", next ? "dark" : "light")
+  }
+
+  const sorted = useMemo(() => {
+    return [...tils].sort((a, b) => b.createdAt - a.createdAt)
+  }, [tils])
+
+  const filtered = useMemo(() => {
+    let result = sorted
+
+    if (dateFilter) {
+      result = result.filter((til) => getDateLabel(til.createdAt) === dateFilter)
     }
-  }
 
-  let topics = Array.from(topicCounts.entries()).sort((a, b) => b[1] - a[1])
-
-  if (query) {
+    if (!query) return result
     const q = query.toLowerCase()
-    topics = topics.filter(([topic]) => topic.includes(q))
-  }
+    return result.filter((til) => {
+      if (
+        til.raw.toLowerCase().includes(q) ||
+        til.formatted.toLowerCase().includes(q) ||
+        til.tags.some((tag) => tag.toLowerCase().includes(q))
+      ) return true
+
+      const d = new Date(til.createdAt)
+      const dateStrings = [
+        getDateLabel(til.createdAt).toLowerCase(),
+        d.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase(),
+        d.toLocaleDateString("en-US", { weekday: "short" }).toLowerCase(),
+        d.toLocaleDateString("en-US", { month: "long" }).toLowerCase(),
+        d.toLocaleDateString("en-US", { month: "short" }).toLowerCase(),
+        d.getDate().toString(),
+        d.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toLowerCase(),
+        d.toLocaleDateString("en-US", { month: "long", day: "numeric" }).toLowerCase(),
+        d.getFullYear().toString(),
+      ]
+      return dateStrings.some((s) => s.includes(q))
+    })
+  }, [query, dateFilter, sorted])
+
+  const grouped = useMemo(() => {
+    const groups = new Map<string, Til[]>()
+    for (const til of filtered) {
+      const label = getDateLabel(til.createdAt)
+      if (!groups.has(label)) groups.set(label, [])
+      groups.get(label)!.push(til)
+    }
+    return Array.from(groups.entries()).sort(
+      (a, b) => getDateGroupOrder(a[0]) - getDateGroupOrder(b[0])
+    )
+  }, [filtered])
 
   return (
     <>
       <aside className="hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-950 lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:flex-col">
-        <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-gray-800">
           <h1 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             TIL Academia
           </h1>
+          <button
+            onClick={toggleTheme}
+            className="rounded-md p-1.5 text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Toggle theme"
+          >
+            {isDark ? (
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            ) : (
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            )}
+          </button>
         </div>
 
         <div className="border-b border-gray-100 px-4 py-3 dark:border-gray-800">
@@ -105,77 +198,131 @@ export default function Sidebar({ tils, selectedTopic, onSelectTopic, onCreateNe
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Filter topics..."
+            placeholder="Filter TILs..."
             className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm ring-1 ring-gray-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-100 dark:ring-gray-700 dark:placeholder:text-gray-500"
           />
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-3">
-          <button
-            onClick={() => {
-              onSelectTopic(ALL_TOPICS)
-              setQuery("")
-              setShowNewMenu(false)
-            }}
-            className={`relative flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm transition-colors ${
-              selectedTopic === ALL_TOPICS
-                ? "text-blue-700 dark:text-blue-300"
-                : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-            }`}
-          >
-            {selectedTopic === ALL_TOPICS && (
-              <span className="absolute inset-y-0 left-0 w-0.5 rounded-r-full bg-blue-600 dark:bg-blue-400" />
-            )}
-            All entries
-            <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">
-              {tils.length}
-            </span>
-          </button>
+        {!query && (
+          <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-800">
+            <div className="flex flex-wrap gap-1">
+              <button
+                onClick={() => setDateFilter(null)}
+                className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                  dateFilter === null
+                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                    : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                }`}
+              >
+                All
+              </button>
+              {DATE_FILTERS.map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setDateFilter(dateFilter === f ? null : f)}
+                  className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                    dateFilter === f
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                      : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-          <div className="my-2 border-t border-gray-100 dark:border-gray-800" />
-
-          {topics.map(([topic, count]) => (
-            <button
-              key={topic}
-              onClick={() => {
-                onSelectTopic(topic)
-                setQuery("")
-                setShowNewMenu(false)
-              }}
-              className={`relative flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm transition-colors ${
-                selectedTopic === topic
-                  ? "text-blue-700 dark:text-blue-300"
-                  : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-              }`}
-            >
-              {selectedTopic === topic && (
-                <span className="absolute inset-y-0 left-0 w-0.5 rounded-r-full bg-blue-600 dark:bg-blue-400" />
-              )}
-              {topic}
-              <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">
-                {count}
-              </span>
-            </button>
-          ))}
-
-          {query && topics.length === 0 && (
-            <p className="px-3 py-4 text-center text-sm text-gray-400 dark:text-gray-500">
-              No topics match &ldquo;{query}&rdquo;
+        <nav className="flex-1 overflow-y-auto px-3 py-2">
+          {filtered.length === 0 ? (
+            <p className="px-3 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+              {query ? "No TILs match your filter." : "No entries saved yet."}
             </p>
+          ) : (
+            <div className="space-y-4">
+              {grouped.map(([label, entries]) => (
+                <div key={label}>
+                  <h2 className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                    {label}
+                  </h2>
+                  <div className="space-y-0.5">
+                    {entries.map((til) => {
+                      const preview = (stripHtml(til.formatted) || til.raw).slice(0, 70)
+                      const isSelected = selectedTilId === til.id
+
+                      return (
+                        <button
+                          key={til.id}
+                          onClick={() => { onSelectTil(til.id); setQuery(""); setShowNewMenu(false) }}
+                          className={`relative flex w-full flex-col gap-0.5 rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                            isSelected
+                              ? "bg-blue-50 dark:bg-blue-900/30"
+                              : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                          }`}
+                        >
+                          {isSelected && (
+                            <span className="absolute inset-y-0 left-0 w-0.5 rounded-r-full bg-blue-600 dark:bg-blue-400" />
+                          )}
+                          {til.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {til.tags.map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="inline-flex items-center rounded-full bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <span className={`block truncate text-xs leading-snug ${
+                            isSelected
+                              ? "text-blue-800 dark:text-blue-200"
+                              : "text-gray-500 dark:text-gray-400"
+                          }`}>
+                            {preview || "Untitled"}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </nav>
       </aside>
 
-      {/* mobile topic bar */}
+      {/* mobile view */}
       <div className="mb-6 lg:hidden">
         <div className="mb-3 flex gap-2">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Filter topics..."
-            className="flex-1 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-500"
-          />
+          <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 dark:border-gray-700 dark:bg-gray-900 flex-1">
+            <svg className="h-4 w-4 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Filter TILs..."
+              className="flex-1 border-0 bg-transparent py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-gray-100 dark:placeholder:text-gray-500"
+            />
+          </div>
+          <button
+            onClick={toggleTheme}
+            className="rounded-lg border border-gray-200 bg-white p-2 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Toggle theme"
+          >
+            {isDark ? (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            )}
+          </button>
           <div className="relative" ref={mobileMenuRef}>
             <button
               onClick={() => setShowNewMenu(!showNewMenu)}
@@ -210,37 +357,58 @@ export default function Sidebar({ tils, selectedTopic, onSelectTopic, onCreateNe
             )}
           </div>
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          <button
-            onClick={() => {
-              onSelectTopic(ALL_TOPICS)
-              setQuery("")
-            }}
-            className={`rounded-lg px-3 py-1.5 text-sm ${
-              selectedTopic === ALL_TOPICS
-                ? "bg-blue-100 font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-                : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-            }`}
-          >
-            All ({tils.length})
-          </button>
-          {topics.map(([topic, count]) => (
+        {!query && (
+          <div className="mb-3 flex flex-wrap gap-1.5">
             <button
-              key={topic}
-              onClick={() => {
-                onSelectTopic(topic)
-                setQuery("")
-              }}
-              className={`rounded-lg px-3 py-1.5 text-sm ${
-                selectedTopic === topic
-                  ? "bg-blue-100 font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-200"
+              onClick={() => setDateFilter(null)}
+              className={`rounded-lg px-2.5 py-1 text-xs font-medium ${
+                dateFilter === null
+                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
                   : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
               }`}
             >
-              {topic} ({count})
+              All
             </button>
-          ))}
-        </div>
+            {DATE_FILTERS.map((f) => (
+              <button
+                key={f}
+                onClick={() => setDateFilter(dateFilter === f ? null : f)}
+                className={`rounded-lg px-2.5 py-1 text-xs font-medium ${
+                  dateFilter === f
+                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
+                    : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        )}
+        {grouped.map(([label, entries]) => (
+          <div key={label} className="mb-4">
+            <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              {label}
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {entries.slice(0, 3).map((til) => {
+                const preview = (stripHtml(til.formatted) || til.raw).slice(0, 30)
+                return (
+                  <button
+                    key={til.id}
+                    onClick={() => onSelectTil(til.id)}
+                    className={`rounded-lg px-3 py-1.5 text-sm ${
+                      selectedTilId === til.id
+                        ? "bg-blue-100 font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-200"
+                        : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                    }`}
+                  >
+                    {preview || "Untitled"}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </div>
     </>
   )

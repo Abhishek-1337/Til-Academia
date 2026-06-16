@@ -39,7 +39,7 @@ export default function TilForm({ onSaved, initialMode }: TilFormProps) {
     setError("")
 
     try {
-      const res = await fetch("/app2/api/format", {
+      const res = await fetch("/api/format", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ raw: raw.trim(), apiKey }),
