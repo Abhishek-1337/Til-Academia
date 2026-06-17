@@ -15,6 +15,7 @@ export default function Home() {
   const [allTils, setAllTils] = useState<Til[]>([])
   const [composingMode, setComposingMode] = useState<"raw" | "manual" | null>(null)
   const [editingTilId, setEditingTilId] = useState<string | null>(null)
+  const [apiKeyResetKey, setApiKeyResetKey] = useState(0)
 
   const loadTils = useCallback(async () => {
     try {
@@ -93,11 +94,12 @@ export default function Home() {
                 Cancel
               </button>
             </div>
-            <ApiKeyInput />
+            <ApiKeyInput resetKey={apiKeyResetKey} />
             <TilForm
               key={composingMode}
               initialMode={composingMode}
               onSaved={handleFormSaved}
+              onApiKeyError={() => setApiKeyResetKey((k) => k + 1)}
             />
           </>
         ) : editingTil ? (

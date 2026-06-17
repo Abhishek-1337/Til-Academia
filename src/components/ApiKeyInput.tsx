@@ -1,11 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { getApiKey, setApiKey } from "@/lib/store"
 
-export default function ApiKeyInput() {
+interface ApiKeyInputProps {
+  resetKey?: number
+}
+
+export default function ApiKeyInput({ resetKey = 0 }: ApiKeyInputProps) {
   const [key, setKey] = useState(getApiKey())
   const [saved, setSaved] = useState(!!getApiKey())
+
+  useEffect(() => {
+    setKey("")
+    setSaved(false)
+    localStorage.removeItem("openai_key")
+  }, [resetKey])
 
   const handleSave = () => {
     if (!key.trim()) return

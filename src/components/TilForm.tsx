@@ -12,13 +12,14 @@ const turndown = new TurndownService({ headingStyle: "atx" })
 
 interface TilFormProps {
   onSaved: () => void
+  onApiKeyError?: () => void
   initialMode?: "raw" | "manual"
   til?: Til
 }
 
 type Mode = "raw" | "manual"
 
-export default function TilForm({ onSaved, initialMode, til }: TilFormProps) {
+export default function TilForm({ onSaved, onApiKeyError, initialMode, til }: TilFormProps) {
   const initialHtml = useMemo(() => {
     if (!til) return ""
     return (marked.parse(til.formatted) as string) || ""
@@ -72,6 +73,7 @@ export default function TilForm({ onSaved, initialMode, til }: TilFormProps) {
       onSaved()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong")
+      onApiKeyError?.()
     } finally {
       setLoading(false)
     }
