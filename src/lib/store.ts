@@ -23,6 +23,19 @@ export async function saveTil(til: Omit<Til, "id" | "createdAt">): Promise<Til> 
   return res.json()
 }
 
+export async function updateTil(
+  id: string,
+  til: Omit<Til, "id" | "createdAt">
+): Promise<Til> {
+  const res = await fetch(`/api/tils/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(til),
+  })
+  if (!res.ok) throw new Error("Failed to update TIL")
+  return res.json()
+}
+
 export async function deleteTil(id: string): Promise<void> {
   const res = await fetch(`/api/tils/${id}`, { method: "DELETE" })
   if (!res.ok) throw new Error("Failed to delete TIL")

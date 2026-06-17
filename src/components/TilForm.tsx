@@ -1,25 +1,33 @@
 "use client"
 
-import { useState, useCallback } from "react"
-import { getApiKey, saveTil } from "@/lib/store"
+import { useState, useCallback, useEffect, useMemo } from "react"
+import { getApiKey, saveTil, updateTil } from "@/lib/store"
+import type { Til } from "@/lib/store"
 import RichEditor from "./RichEditor"
 import TagInput from "./TagInput"
 import TurndownService from "turndown"
+import { marked } from "marked"
 
 const turndown = new TurndownService({ headingStyle: "atx" })
 
 interface TilFormProps {
   onSaved: () => void
   initialMode?: "raw" | "manual"
+  til?: Til
 }
 
 type Mode = "raw" | "manual"
 
-export default function TilForm({ onSaved, initialMode }: TilFormProps) {
-  const [mode, setMode] = useState<Mode>(initialMode || "raw")
-  const [raw, setRaw] = useState("")
-  const [html, setHtml] = useState("")
-  const [tags, setTags] = useState<string[]>([])
+export default function TilForm({ onSaved, initialMode, til }: TilFormProps) {
+  const initialHtml = useMemo(() => {
+    if (!til) return ""
+    return (marked.parse(til.formatted) as string) || ""
+  }, [til])
+
+  const [mode, setMode] = useState<Mode>(til ? "manual" : initialMode || "raw")
+  const [raw, setRaw] = useState(til?.raw ?? "")
+  const [html, setHtml] = useState(initialHtml)
+  const [tags, setTags] = useState<string[]>(til?.tags ?? [])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -51,11 +59,13 @@ export default function TilForm({ onSaved, initialMode }: TilFormProps) {
         throw new Error(data.error || "Failed to format")
       }
 
-      await saveTil({
-        raw: raw.trim(),
-        formatted: data.formatted,
-        tags,
-      })
+      const formatted = data.formatted
+
+      if (til) {
+        await updateTil(til.id, { raw: raw.trim(), formatted, tags })
+      } else {
+        await saveTil({ raw: raw.trim(), formatted, tags })
+      }
 
       setRaw("")
       setTags([])
@@ -79,11 +89,11 @@ export default function TilForm({ onSaved, initialMode }: TilFormProps) {
     const markdown = turndown.turndown(html)
 
     try {
-      await saveTil({
-        raw: text,
-        formatted: markdown,
-        tags,
-      })
+      if (til) {
+        await updateTil(til.id, { raw: text, formatted: markdown, tags })
+      } else {
+        await saveTil({ raw: text, formatted: markdown, tags })
+      }
 
       setHtml("")
       setTags([])
@@ -92,7 +102,7 @@ export default function TilForm({ onSaved, initialMode }: TilFormProps) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong")
     }
-  }, [html, tags, onSaved])
+  }, [html, tags, til, onSaved])
 
   return (
     <div className="mb-8">
@@ -102,28 +112,30 @@ export default function TilForm({ onSaved, initialMode }: TilFormProps) {
             ? "Paste raw notes and let AI format them."
             : "Write directly with the rich text editor."}
         </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              if (mode === "manual") {
-                if (!apiKey) {
-                  setError("Please set your OpenAI API key first")
-                  return
+        {!til && (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (mode === "manual") {
+                  if (!apiKey) {
+                    setError("Please set your OpenAI API key first")
+                    return
+                  }
+                  setError("")
                 }
-                setError("")
-              }
-              setMode(mode === "raw" ? "manual" : "raw")
-            }}
-            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              mode === "raw"
-                ? "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }`}
-          >
-            {mode === "raw" ? "Manual Entry" : "AI Parse"}
-          </button>
-        </div>
+                setMode(mode === "raw" ? "manual" : "raw")
+              }}
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                mode === "raw"
+                  ? "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
+            >
+              {mode === "raw" ? "Manual Entry" : "AI Parse"}
+            </button>
+          </div>
+        )}
       </div>
 
       {mode === "raw" ? (
@@ -168,7 +180,7 @@ export default function TilForm({ onSaved, initialMode }: TilFormProps) {
           <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
             Write your TIL entry
           </label>
-          <RichEditor content={html} onChange={setHtml} />
+          <RichEditor key={til?.id ?? "new"} content={html} onChange={setHtml} />
           <div className="mt-3">
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Topics

@@ -14,6 +14,7 @@ export default function Home() {
   const [selectedTilId, setSelectedTilId] = useState<string | null>(null)
   const [allTils, setAllTils] = useState<Til[]>([])
   const [composingMode, setComposingMode] = useState<"raw" | "manual" | null>(null)
+  const [editingTilId, setEditingTilId] = useState<string | null>(null)
 
   const loadTils = useCallback(async () => {
     try {
@@ -37,7 +38,13 @@ export default function Home() {
   const handleFormSaved = useCallback(() => {
     setRefreshKey((k) => k + 1)
     setComposingMode(null)
+    setEditingTilId(null)
     setSelectedTilId(null)
+  }, [])
+
+  const handleEditTil = useCallback((id: string) => {
+    setEditingTilId(id)
+    setComposingMode(null)
   }, [])
 
   const handleSelectTil = useCallback((id: string | null) => {
@@ -62,6 +69,7 @@ export default function Home() {
   }, [allTils])
 
   const selectedTil = selectedTilId ? allTils.find((t) => t.id === selectedTilId) ?? null : null
+  const editingTil = editingTilId ? allTils.find((t) => t.id === editingTilId) ?? null : null
 
   return (
     <div className="lg:ml-64">
@@ -92,6 +100,25 @@ export default function Home() {
               onSaved={handleFormSaved}
             />
           </>
+        ) : editingTil ? (
+          <>
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Edit TIL
+              </h2>
+              <button
+                onClick={() => setEditingTilId(null)}
+                className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+            <TilForm
+              key={editingTil.id}
+              til={editingTil}
+              onSaved={handleFormSaved}
+            />
+          </>
         ) : selectedTil ? (
           <article className="px-0 sm:px-4">
             <div className="mb-8 flex items-center justify-between">
@@ -104,12 +131,20 @@ export default function Home() {
                 </svg>
                 Back to all
               </button>
-              <button
-                onClick={() => handleDeleteTil(selectedTil.id)}
-                className="text-xs text-red-400 underline hover:text-red-600"
-              >
-                Delete
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handleEditTil(selectedTil.id)}
+                  className="text-xs text-blue-500 underline hover:text-blue-700"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteTil(selectedTil.id)}
+                  className="text-xs text-red-400 underline hover:text-red-600"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
 
             <header className="mb-8">
