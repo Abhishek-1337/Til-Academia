@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, useMemo } from "react"
+import { useState, useRef, useEffect, useMemo, useCallback } from "react"
 import type { Til } from "@/lib/store"
 
 interface SidebarProps {
@@ -43,17 +43,21 @@ function getDateGroupOrder(label: string): number {
 }
 
 const DATE_FILTERS = ["Today", "Yesterday", "This Week", "Last Week", "This Month"] as const
-type DateFilter = (typeof DATE_FILTERS)[number]
+type DateFilter = (typeof DATE_FILTERS)[number] | "custom"
 
 export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew }: SidebarProps) {
   const [query, setQuery] = useState("")
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null)
+  const [customDate, setCustomDate] = useState("")
   const [showNewMenu, setShowNewMenu] = useState(false)
+  const [showDatePicker, setShowDatePicker] = useState(false)
   const [isDark, setIsDark] = useState(() =>
     typeof document !== "undefined" && document.documentElement.classList.contains("dark")
   )
   const desktopMenuRef = useRef<HTMLDivElement>(null)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
+  const datePickerRef = useRef<HTMLDivElement>(null)
+  const mobileDatePickerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -65,6 +69,14 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
         !mobileMenuRef.current.contains(target)
       ) {
         setShowNewMenu(false)
+      }
+      if (
+        datePickerRef.current &&
+        !datePickerRef.current.contains(target) &&
+        mobileDatePickerRef.current &&
+        !mobileDatePickerRef.current.contains(target)
+      ) {
+        setShowDatePicker(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -85,7 +97,17 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
   const filtered = useMemo(() => {
     let result = sorted
 
-    if (dateFilter) {
+    if (dateFilter === "custom" && customDate) {
+      const target = new Date(customDate)
+      result = result.filter((til) => {
+        const t = new Date(til.createdAt)
+        return (
+          t.getFullYear() === target.getFullYear() &&
+          t.getMonth() === target.getMonth() &&
+          t.getDate() === target.getDate()
+        )
+      })
+    } else if (dateFilter && dateFilter !== "custom") {
       result = result.filter((til) => getDateLabel(til.createdAt) === dateFilter)
     }
 
@@ -112,7 +134,7 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
       ]
       return dateStrings.some((s) => s.includes(q))
     })
-  }, [query, dateFilter, sorted])
+  }, [query, dateFilter, customDate, sorted])
 
   const grouped = useMemo(() => {
     const groups = new Map<string, Til[]>()
@@ -204,31 +226,62 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
         </div>
 
         {!query && (
-          <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-800">
-            <div className="flex flex-wrap gap-1">
+          <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-800" ref={datePickerRef}>
+            <div className="relative">
               <button
-                onClick={() => setDateFilter(null)}
-                className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
-                  dateFilter === null
-                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-                    : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                }`}
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className="flex w-full items-center gap-2 rounded-md bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-300 dark:ring-gray-700 dark:hover:bg-gray-800"
               >
-                All
+                <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="flex-1 text-left">
+                  {dateFilter === "custom" && customDate
+                    ? new Date(customDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                    : dateFilter ?? "All dates"}
+                </span>
+                <svg className={`h-4 w-4 text-gray-400 transition-transform ${showDatePicker ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
-              {DATE_FILTERS.map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setDateFilter(dateFilter === f ? null : f)}
-                  className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
-                    dateFilter === f
-                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-                      : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
+
+              {showDatePicker && (
+                <div className="absolute left-0 top-full z-30 mt-1 w-64 rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                  <div className="mb-2 flex flex-wrap gap-1">
+                    <button
+                      onClick={() => { setDateFilter(null); setCustomDate(""); setShowDatePicker(false) }}
+                      className={`rounded-md px-2 py-1 text-[11px] font-medium ${
+                        dateFilter === null
+                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                          : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      All
+                    </button>
+                    {DATE_FILTERS.map((f) => (
+                      <button
+                        key={f}
+                        onClick={() => { setDateFilter(f); setCustomDate(""); setShowDatePicker(false) }}
+                        className={`rounded-md px-2 py-1 text-[11px] font-medium ${
+                          dateFilter === f
+                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                            : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                        }`}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="border-t border-gray-100 pt-2 dark:border-gray-800">
+                    <input
+                      type="date"
+                      value={customDate}
+                      onChange={(e) => { setCustomDate(e.target.value); setDateFilter(e.target.value ? "custom" : null) }}
+                      className="w-full rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -358,30 +411,61 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
           </div>
         </div>
         {!query && (
-          <div className="mb-3 flex flex-wrap gap-1.5">
+          <div className="relative mb-3" ref={mobileDatePickerRef}>
             <button
-              onClick={() => setDateFilter(null)}
-              className={`rounded-lg px-2.5 py-1 text-xs font-medium ${
-                dateFilter === null
-                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-                  : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-              }`}
+              onClick={() => setShowDatePicker(!showDatePicker)}
+              className="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
             >
-              All
+              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="flex-1 text-left">
+                {dateFilter === "custom" && customDate
+                  ? new Date(customDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                  : dateFilter ?? "All dates"}
+              </span>
+              <svg className={`h-4 w-4 text-gray-400 transition-transform ${showDatePicker ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
-            {DATE_FILTERS.map((f) => (
-              <button
-                key={f}
-                onClick={() => setDateFilter(dateFilter === f ? null : f)}
-                className={`rounded-lg px-2.5 py-1 text-xs font-medium ${
-                  dateFilter === f
-                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-                    : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
+
+            {showDatePicker && (
+              <div className="absolute left-0 top-full z-30 mt-1 w-64 rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                <div className="mb-2 flex flex-wrap gap-1">
+                  <button
+                    onClick={() => { setDateFilter(null); setCustomDate(""); setShowDatePicker(false) }}
+                    className={`rounded-md px-2 py-1 text-[11px] font-medium ${
+                      dateFilter === null
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                        : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                    }`}
+                  >
+                    All
+                  </button>
+                  {DATE_FILTERS.map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => { setDateFilter(f); setCustomDate(""); setShowDatePicker(false) }}
+                      className={`rounded-md px-2 py-1 text-[11px] font-medium ${
+                        dateFilter === f
+                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                          : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+                <div className="border-t border-gray-100 pt-2 dark:border-gray-800">
+                  <input
+                    type="date"
+                    value={customDate}
+                    onChange={(e) => { setCustomDate(e.target.value); setDateFilter(e.target.value ? "custom" : null) }}
+                    className="w-full rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
         {grouped.map(([label, entries]) => (

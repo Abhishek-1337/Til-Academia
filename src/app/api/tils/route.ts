@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/lib/auth"
 
 export async function GET(request: NextRequest) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   const topic = request.nextUrl.searchParams.get("topic")
 
-  const where = topic ? { tags: { has: topic } } : {}
+  const where: Record<string, unknown> = { userId: session.user.id }
+  if (topic) where.tags = { has: topic }
 
   const tils = await prisma.til.findMany({
     where,
@@ -15,6 +22,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   const body = await request.json()
 
   const til = await prisma.til.create({
@@ -22,6 +34,7 @@ export async function POST(request: NextRequest) {
       raw: body.raw,
       formatted: body.formatted,
       tags: body.tags ?? [],
+      userId: session.user.id,
     },
   })
 

@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
+import SessionProvider from "@/components/SessionProvider"
+import AuthButton from "@/components/AuthButton"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -36,7 +38,12 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-        {children}
+        <SessionProvider>
+          <header className="flex items-center justify-end gap-4 border-b border-gray-200 px-6 py-3 dark:border-gray-800">
+            <AuthButton />
+          </header>
+          {children}
+        </SessionProvider>
       </body>
     </html>
   )
