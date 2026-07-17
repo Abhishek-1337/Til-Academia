@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
 
   const til = await prisma.til.create({
     data: {
+      title: body.title ?? null,
       raw: body.raw,
       formatted: body.formatted,
       tags: body.tags ?? [],

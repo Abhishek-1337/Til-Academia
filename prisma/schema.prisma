@@ -53,6 +53,7 @@ model VerificationToken {
 
 model Til {
   id        String   @id @default(uuid())
+  title     String?
   raw       String
   formatted String
   tags      String[]

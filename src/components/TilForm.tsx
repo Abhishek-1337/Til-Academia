@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect, useMemo } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { getApiKey, saveTil, updateTil } from "@/lib/store"
 import type { Til } from "@/lib/store"
 import RichEditor from "./RichEditor"
@@ -26,6 +26,7 @@ export default function TilForm({ onSaved, onApiKeyError, initialMode, til }: Ti
   }, [til])
 
   const [mode, setMode] = useState<Mode>(til ? "manual" : initialMode || "raw")
+  const [title, setTitle] = useState(til?.title ?? "")
   const [raw, setRaw] = useState(til?.raw ?? "")
   const [html, setHtml] = useState(initialHtml)
   const [tags, setTags] = useState<string[]>(til?.tags ?? [])
@@ -63,12 +64,13 @@ export default function TilForm({ onSaved, onApiKeyError, initialMode, til }: Ti
       const formatted = data.formatted
 
       if (til) {
-        await updateTil(til.id, { raw: raw.trim(), formatted, tags })
+        await updateTil(til.id, { title: title.trim(), raw: raw.trim(), formatted, tags })
       } else {
-        await saveTil({ raw: raw.trim(), formatted, tags })
+        await saveTil({ title: title.trim(), raw: raw.trim(), formatted, tags })
       }
 
       setRaw("")
+      setTitle("")
       setTags([])
       onSaved()
     } catch (err) {
@@ -92,22 +94,39 @@ export default function TilForm({ onSaved, onApiKeyError, initialMode, til }: Ti
 
     try {
       if (til) {
-        await updateTil(til.id, { raw: text, formatted: markdown, tags })
+        await updateTil(til.id, { title: title.trim(), raw: text, formatted: markdown, tags })
       } else {
-        await saveTil({ raw: text, formatted: markdown, tags })
+        await saveTil({ title: title.trim(), raw: text, formatted: markdown, tags })
       }
 
       setHtml("")
+      setTitle("")
       setTags([])
       setError("")
       onSaved()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong")
     }
-  }, [html, tags, til, onSaved])
+  }, [title, html, tags, til, onSaved])
 
   return (
     <div className="mb-8">
+      <div className="mb-3">
+        <label
+          htmlFor="title-input"
+          className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Title
+        </label>
+        <input
+          id="title-input"
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Give your TIL a title"
+          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+        />
+      </div>
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="text-sm text-gray-500 dark:text-gray-400">
           {mode === "raw"

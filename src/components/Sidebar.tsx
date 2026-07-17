@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, useMemo, useCallback } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import type { Til } from "@/lib/store"
 
 interface SidebarProps {
@@ -8,10 +8,6 @@ interface SidebarProps {
   selectedTilId: string | null
   onSelectTil: (id: string | null) => void
   onCreateNew: (mode: "raw" | "manual") => void
-}
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "")
 }
 
 const MS_PER_DAY = 86400000
@@ -115,6 +111,7 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
     const q = query.toLowerCase()
     return result.filter((til) => {
       if (
+        (til.title && til.title.toLowerCase().includes(q)) ||
         til.raw.toLowerCase().includes(q) ||
         til.formatted.toLowerCase().includes(q) ||
         til.tags.some((tag) => tag.toLowerCase().includes(q))
@@ -300,7 +297,6 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
                   </h2>
                   <div className="space-y-0.5">
                     {entries.map((til) => {
-                      const preview = (stripHtml(til.formatted) || til.raw).slice(0, 70)
                       const isSelected = selectedTilId === til.id
 
                       return (
@@ -316,6 +312,13 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
                           {isSelected && (
                             <span className="absolute inset-y-0 left-0 w-0.5 rounded-r-full bg-blue-600 dark:bg-blue-400" />
                           )}
+                          <span className={`block truncate text-sm font-medium leading-snug ${
+                            isSelected
+                              ? "text-blue-800 dark:text-blue-200"
+                              : "text-gray-800 dark:text-gray-200"
+                          }`}>
+                            {til.title || "Untitled"}
+                          </span>
                           {til.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1">
                               {til.tags.map((tag) => (
@@ -328,13 +331,6 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
                               ))}
                             </div>
                           )}
-                          <span className={`block truncate text-xs leading-snug ${
-                            isSelected
-                              ? "text-blue-800 dark:text-blue-200"
-                              : "text-gray-500 dark:text-gray-400"
-                          }`}>
-                            {preview || "Untitled"}
-                          </span>
                         </button>
                       )
                     })}
@@ -475,7 +471,6 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
             </h3>
             <div className="flex flex-wrap gap-1.5">
               {entries.slice(0, 3).map((til) => {
-                const preview = (stripHtml(til.formatted) || til.raw).slice(0, 30)
                 return (
                   <button
                     key={til.id}
@@ -486,7 +481,7 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
                         : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
                     }`}
                   >
-                    {preview || "Untitled"}
+                    {til.title || "Untitled"}
                   </button>
                 )
               })}

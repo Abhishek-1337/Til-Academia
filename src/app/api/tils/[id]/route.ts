@@ -23,6 +23,7 @@ export async function PUT(
   const updated = await prisma.til.update({
     where: { id },
     data: {
+      title: body.title ?? null,
       raw: body.raw,
       formatted: body.formatted,
       tags: body.tags ?? [],
