@@ -80,7 +80,7 @@ export default function Home() {
         onSelectTil={handleSelectTil}
         onCreateNew={handleCreateNew}
       />
-      <main className="mx-auto max-w-3xl px-4 py-12">
+      <main className="mx-auto max-w-5xl px-4 py-12">
         {composingMode ? (
           <>
             <div className="mb-6 flex items-center justify-between">

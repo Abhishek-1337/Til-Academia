@@ -303,10 +303,10 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
                         <button
                           key={til.id}
                           onClick={() => { onSelectTil(til.id); setQuery(""); setShowNewMenu(false) }}
-                          className={`relative flex w-full flex-col gap-0.5 rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                          className={`relative flex w-full flex-col gap-0.5 rounded-md border-b border-gray-100 px-3 py-2 text-left text-sm transition-colors last:border-0 dark:border-gray-800/60 ${
                             isSelected
                               ? "bg-blue-50 dark:bg-blue-900/30"
-                              : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                              : "hover:bg-gray-100 dark:hover:bg-white/[0.04]"
                           }`}
                         >
                           {isSelected && (
@@ -478,7 +478,7 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
                     className={`rounded-lg px-3 py-1.5 text-sm ${
                       selectedTilId === til.id
                         ? "bg-blue-100 font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-                        : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                        : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/[0.04]"
                     }`}
                   >
                     {til.title || "Untitled"}
