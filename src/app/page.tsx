@@ -179,12 +179,14 @@ export default function Home() {
               )}
             </header>
 
-            <div
-              className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-semibold prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-p:leading-relaxed [&_pre]:overflow-x-auto"
-              dangerouslySetInnerHTML={{
-                __html: renderMarkdownToHtml(selectedTil.formatted),
-              }}
-            />
+            <div className="rounded-xl bg-gray-50 p-6 dark:bg-gray-800">
+              <div
+                className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-semibold prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-p:leading-relaxed [&_pre]:overflow-x-auto"
+                dangerouslySetInnerHTML={{
+                  __html: renderMarkdownToHtml(selectedTil.formatted),
+                }}
+              />
+            </div>
 
             {selectedTil.raw && (
               <details className="mt-12">

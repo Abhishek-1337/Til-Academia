@@ -37,7 +37,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+      <body className="min-h-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         <SessionProvider>
           <header className="flex items-center justify-end gap-4 border-b border-gray-200 px-6 py-3 dark:border-gray-800">
             <AuthButton />

@@ -58,7 +58,7 @@ export default function TilCard({ til, onDelete }: TilCardProps) {
         </pre>
       )}
 
-      <div className="mt-1 rounded-xl bg-gray-50 p-4 dark:bg-gray-900">
+      <div className="mt-1 rounded-xl bg-gray-50 p-4 dark:bg-gray-800">
         <div
           className="prose prose-sm max-w-none dark:prose-invert prose-p:leading-relaxed [&_pre]:overflow-x-auto"
           dangerouslySetInnerHTML={{
