@@ -8,10 +8,8 @@ interface SidebarProps {
   selectedTilId: string | null
   selectedTopic: string | null
   query: string
-  onQueryChange: (query: string) => void
   onSelectTil: (id: string | null) => void
   onSelectTopic: (topic: string | null) => void
-  onCreateNew: (mode: "raw" | "manual") => void
 }
 
 const MS_PER_DAY = 86400000
@@ -44,35 +42,22 @@ export default function Sidebar({
   selectedTilId,
   selectedTopic,
   query,
-  onQueryChange,
   onSelectTil,
   onSelectTopic,
-  onCreateNew,
 }: SidebarProps) {
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null)
   const [customDate, setCustomDate] = useState("")
-  const [showNewMenu, setShowNewMenu] = useState(false)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [isDark, setIsDark] = useState(() =>
     typeof document !== "undefined" && document.documentElement.classList.contains("dark")
   )
-  const desktopMenuRef = useRef<HTMLDivElement>(null)
-  const mobileMenuRef = useRef<HTMLDivElement>(null)
   const datePickerRef = useRef<HTMLDivElement>(null)
   const mobileDatePickerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       const target = e.target as Node
-      if (
-        desktopMenuRef.current &&
-        !desktopMenuRef.current.contains(target) &&
-        mobileMenuRef.current &&
-        !mobileMenuRef.current.contains(target)
-      ) {
-        setShowNewMenu(false)
-      }
       if (
         datePickerRef.current &&
         !datePickerRef.current.contains(target) &&
@@ -259,59 +244,6 @@ export default function Sidebar({
           </button>
         </div>
 
-        <div className="border-b border-gray-100 px-4 py-3 dark:border-gray-800">
-          <div className="relative" ref={desktopMenuRef}>
-            <button
-              onClick={() => setShowNewMenu(!showNewMenu)}
-              className="flex w-full items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              New TIL
-            </button>
-            {showNewMenu && (
-              <div className="absolute left-0 top-full z-20 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
-                <button
-                  onClick={() => { onCreateNew("raw"); setShowNewMenu(false) }}
-                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                >
-                  <svg className="h-4 w-4 shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <div>
-                    <div className="font-medium">AI Parse</div>
-                    <div className="text-xs text-gray-400">Paste raw notes, get formatted Markdown</div>
-                  </div>
-                </button>
-                <div className="border-t border-gray-100 dark:border-gray-800" />
-                <button
-                  onClick={() => { onCreateNew("manual"); setShowNewMenu(false) }}
-                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                >
-                  <svg className="h-4 w-4 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  <div>
-                    <div className="font-medium">Manual Entry</div>
-                    <div className="text-xs text-gray-400">Write with the rich text editor</div>
-                  </div>
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="border-b border-gray-100 px-4 py-3 dark:border-gray-800">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Filter TILs..."
-            className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm ring-1 ring-gray-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-100 dark:ring-gray-700 dark:placeholder:text-gray-500"
-          />
-        </div>
-
         {!query && (
           <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-800" ref={datePickerRef}>
             <div className="relative">
@@ -386,19 +318,7 @@ export default function Sidebar({
 
       {/* mobile view */}
       <div className="mb-6 lg:hidden">
-        <div className="mb-3 flex gap-2">
-          <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 dark:border-gray-700 dark:bg-gray-900 flex-1">
-            <svg className="h-4 w-4 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => onQueryChange(e.target.value)}
-              placeholder="Filter TILs..."
-              className="flex-1 border-0 bg-transparent py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-gray-100 dark:placeholder:text-gray-500"
-            />
-          </div>
+        <div className="mb-3 flex justify-end">
           <button
             onClick={toggleTheme}
             className="rounded-lg border border-gray-200 bg-white p-2 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
@@ -414,39 +334,6 @@ export default function Sidebar({
               </svg>
             )}
           </button>
-          <div className="relative" ref={mobileMenuRef}>
-            <button
-              onClick={() => setShowNewMenu(!showNewMenu)}
-              className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-            {showNewMenu && (
-              <div className="absolute right-0 top-full z-20 mt-1 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
-                <button
-                  onClick={() => { onCreateNew("raw"); setShowNewMenu(false) }}
-                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                >
-                  <svg className="h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  AI Parse
-                </button>
-                <div className="border-t border-gray-100 dark:border-gray-800" />
-                <button
-                  onClick={() => { onCreateNew("manual"); setShowNewMenu(false) }}
-                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                >
-                  <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Manual Entry
-                </button>
-              </div>
-            )}
-          </div>
         </div>
         {!query && (
           <div className="relative mb-3" ref={mobileDatePickerRef}>
