@@ -6,7 +6,9 @@ import type { Til } from "@/lib/store"
 interface SidebarProps {
   tils: Til[]
   selectedTilId: string | null
+  selectedTopic: string | null
   onSelectTil: (id: string | null) => void
+  onSelectTopic: (topic: string | null) => void
   onCreateNew: (mode: "raw" | "manual") => void
 }
 
@@ -27,26 +29,28 @@ function getDateLabel(timestamp: number): string {
   return date.toLocaleDateString("en-US", { month: "long", year: "numeric" })
 }
 
-function getDateGroupOrder(label: string): number {
-  const order: Record<string, number> = {
-    "Today": 0,
-    "Yesterday": 1,
-    "This Week": 2,
-    "Last Week": 3,
-    "This Month": 4,
-  }
-  return order[label] ?? 5
-}
-
 const DATE_FILTERS = ["Today", "Yesterday", "This Week", "Last Week", "This Month"] as const
 type DateFilter = (typeof DATE_FILTERS)[number] | "custom"
 
-export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew }: SidebarProps) {
+function normalizeTopic(topic: string | null | undefined): string {
+  const t = (topic ?? "").trim().toLowerCase()
+  return t || "untagged"
+}
+
+export default function Sidebar({
+  tils,
+  selectedTilId,
+  selectedTopic,
+  onSelectTil,
+  onSelectTopic,
+  onCreateNew,
+}: SidebarProps) {
   const [query, setQuery] = useState("")
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null)
   const [customDate, setCustomDate] = useState("")
   const [showNewMenu, setShowNewMenu] = useState(false)
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [isDark, setIsDark] = useState(() =>
     typeof document !== "undefined" && document.documentElement.classList.contains("dark")
   )
@@ -86,12 +90,22 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
     localStorage.setItem("theme", next ? "dark" : "light")
   }
 
-  const sorted = useMemo(() => {
-    return [...tils].sort((a, b) => b.createdAt - a.createdAt)
-  }, [tils])
+  const toggleExpand = (topic: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      if (next.has(topic)) next.delete(topic)
+      else next.add(topic)
+      return next
+    })
+  }
+
+  const handleSelectTopic = (topic: string) => {
+    onSelectTopic(topic)
+    toggleExpand(topic)
+  }
 
   const filtered = useMemo(() => {
-    let result = sorted
+    let result = [...tils].sort((a, b) => b.createdAt - a.createdAt)
 
     if (dateFilter === "custom" && customDate) {
       const target = new Date(customDate)
@@ -112,6 +126,7 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
     return result.filter((til) => {
       if (
         (til.title && til.title.toLowerCase().includes(q)) ||
+        (til.topic && til.topic.toLowerCase().includes(q)) ||
         til.raw.toLowerCase().includes(q) ||
         til.formatted.toLowerCase().includes(q) ||
         til.tags.some((tag) => tag.toLowerCase().includes(q))
@@ -125,25 +140,97 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
         d.toLocaleDateString("en-US", { month: "long" }).toLowerCase(),
         d.toLocaleDateString("en-US", { month: "short" }).toLowerCase(),
         d.getDate().toString(),
-        d.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toLowerCase(),
-        d.toLocaleDateString("en-US", { month: "long", day: "numeric" }).toLowerCase(),
         d.getFullYear().toString(),
       ]
       return dateStrings.some((s) => s.includes(q))
     })
-  }, [query, dateFilter, customDate, sorted])
+  }, [query, dateFilter, customDate, tils])
 
-  const grouped = useMemo(() => {
-    const groups = new Map<string, Til[]>()
+  const topics = useMemo(() => {
+    const map = new Map<string, Til[]>()
     for (const til of filtered) {
-      const label = getDateLabel(til.createdAt)
-      if (!groups.has(label)) groups.set(label, [])
-      groups.get(label)!.push(til)
+      const key = normalizeTopic(til.topic)
+      if (!map.has(key)) map.set(key, [])
+      map.get(key)!.push(til)
     }
-    return Array.from(groups.entries()).sort(
-      (a, b) => getDateGroupOrder(a[0]) - getDateGroupOrder(b[0])
-    )
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]))
   }, [filtered])
+
+  const renderTopicList = () =>
+    topics.map(([topic, entries]) => {
+      const isOpen = expanded.has(topic)
+      const isActiveTopic = selectedTopic === topic
+      return (
+        <div key={topic}>
+          <button
+            onClick={() => handleSelectTopic(topic)}
+            className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors ${
+              isActiveTopic
+                ? "bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200"
+                : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.04]"
+            }`}
+          >
+            <svg
+              className={`h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform ${isOpen ? "rotate-90" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+            <span className="flex-1 truncate capitalize">{topic}</span>
+            <span className="rounded-full bg-gray-200 px-1.5 text-[10px] font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-300">
+              {entries.length}
+            </span>
+          </button>
+
+          {isOpen && (
+            <div className="ml-3 space-y-0.5 border-l border-gray-200 pl-2 dark:border-gray-800">
+              {entries.map((til) => {
+                const isSelected = selectedTilId === til.id
+                return (
+                  <button
+                    key={til.id}
+                    onClick={() => onSelectTil(til.id)}
+                    className={`relative flex w-full flex-col gap-0.5 rounded-md border-b border-gray-100 px-3 py-2 text-left text-sm transition-colors last:border-0 dark:border-gray-800/60 ${
+                      isSelected
+                        ? "bg-blue-50 dark:bg-blue-900/30"
+                        : "hover:bg-gray-100 dark:hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    {isSelected && (
+                      <span className="absolute inset-y-0 left-0 w-0.5 rounded-r-full bg-blue-600 dark:bg-blue-400" />
+                    )}
+                    <span
+                      className={`block truncate text-sm font-medium leading-snug ${
+                        isSelected
+                          ? "text-blue-800 dark:text-blue-200"
+                          : "text-gray-800 dark:text-gray-200"
+                      }`}
+                    >
+                      {til.title || "Untitled"}
+                    </span>
+                    {til.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {til.tags.slice(0, 3).map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center rounded-full bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )
+    })
 
   return (
     <>
@@ -283,61 +370,13 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
           </div>
         )}
 
-        <nav className="flex-1 overflow-y-auto px-3 py-2">
-          {filtered.length === 0 ? (
+        <nav className="flex-1 overflow-y-auto px-2 py-2">
+          {topics.length === 0 ? (
             <p className="px-3 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
               {query ? "No TILs match your filter." : "No entries saved yet."}
             </p>
           ) : (
-            <div className="space-y-4">
-              {grouped.map(([label, entries]) => (
-                <div key={label}>
-                  <h2 className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                    {label}
-                  </h2>
-                  <div className="space-y-0.5">
-                    {entries.map((til) => {
-                      const isSelected = selectedTilId === til.id
-
-                      return (
-                        <button
-                          key={til.id}
-                          onClick={() => { onSelectTil(til.id); setQuery(""); setShowNewMenu(false) }}
-                          className={`relative flex w-full flex-col gap-0.5 rounded-md border-b border-gray-100 px-3 py-2 text-left text-sm transition-colors last:border-0 dark:border-gray-800/60 ${
-                            isSelected
-                              ? "bg-blue-50 dark:bg-blue-900/30"
-                              : "hover:bg-gray-100 dark:hover:bg-white/[0.04]"
-                          }`}
-                        >
-                          {isSelected && (
-                            <span className="absolute inset-y-0 left-0 w-0.5 rounded-r-full bg-blue-600 dark:bg-blue-400" />
-                          )}
-                          <span className={`block truncate text-sm font-medium leading-snug ${
-                            isSelected
-                              ? "text-blue-800 dark:text-blue-200"
-                              : "text-gray-800 dark:text-gray-200"
-                          }`}>
-                            {til.title || "Untitled"}
-                          </span>
-                          {til.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {til.tags.map((tag) => (
-                                <span
-                                  key={tag}
-                                  className="inline-flex items-center rounded-full bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <div className="space-y-0.5">{renderTopicList()}</div>
           )}
         </nav>
       </aside>
@@ -464,30 +503,13 @@ export default function Sidebar({ tils, selectedTilId, onSelectTil, onCreateNew 
             )}
           </div>
         )}
-        {grouped.map(([label, entries]) => (
-          <div key={label} className="mb-4">
-            <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-              {label}
-            </h3>
-            <div className="flex flex-wrap gap-1.5">
-              {entries.slice(0, 3).map((til) => {
-                return (
-                  <button
-                    key={til.id}
-                    onClick={() => onSelectTil(til.id)}
-                    className={`rounded-lg px-3 py-1.5 text-sm ${
-                      selectedTilId === til.id
-                        ? "bg-blue-100 font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-                        : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/[0.04]"
-                    }`}
-                  >
-                    {til.title || "Untitled"}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        ))}
+        {topics.length === 0 ? (
+          <p className="px-3 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+            {query ? "No TILs match your filter." : "No entries saved yet."}
+          </p>
+        ) : (
+          <div className="space-y-1">{renderTopicList()}</div>
+        )}
       </div>
     </>
   )

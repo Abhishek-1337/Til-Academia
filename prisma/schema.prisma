@@ -54,10 +54,13 @@ model VerificationToken {
 model Til {
   id        String   @id @default(uuid())
   title     String?
+  topic     String?
   raw       String
   formatted String
   tags      String[]
   createdAt DateTime @default(now())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, topic])
 }

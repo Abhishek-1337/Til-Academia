@@ -24,6 +24,7 @@ export async function PUT(
     where: { id },
     data: {
       title: body.title ?? null,
+      topic: body.topic || null,
       raw: body.raw,
       formatted: body.formatted,
       tags: body.tags ?? [],

@@ -1,6 +1,7 @@
 export interface Til {
   id: string
   title?: string | null
+  topic?: string | null
   raw: string
   formatted: string
   tags: string[]

@@ -12,6 +12,7 @@ import type { Til } from "@/lib/store"
 export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [selectedTilId, setSelectedTilId] = useState<string | null>(null)
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null)
   const [allTils, setAllTils] = useState<Til[]>([])
   const [composingMode, setComposingMode] = useState<"raw" | "manual" | null>(null)
   const [editingTilId, setEditingTilId] = useState<string | null>(null)
@@ -53,6 +54,11 @@ export default function Home() {
     setComposingMode(null)
   }, [])
 
+  const handleSelectTopic = useCallback((topic: string | null) => {
+    setSelectedTopic(topic)
+    if (topic) setSelectedTilId(null)
+  }, [])
+
   const handleDeleteTil = useCallback(async (id: string) => {
     try {
       await deleteTil(id)
@@ -77,7 +83,9 @@ export default function Home() {
       <Sidebar
         tils={allTils}
         selectedTilId={selectedTilId}
+        selectedTopic={selectedTopic}
         onSelectTil={handleSelectTil}
+        onSelectTopic={handleSelectTopic}
         onCreateNew={handleCreateNew}
       />
       <main className="mx-auto max-w-5xl px-4 py-12">
@@ -125,13 +133,16 @@ export default function Home() {
           <article className="px-0 sm:px-4">
             <div className="mb-8 flex items-center justify-between">
               <button
-                onClick={() => setSelectedTilId(null)}
+                onClick={() => {
+                  setSelectedTilId(null)
+                  if (selectedTopic) setSelectedTopic(null)
+                }}
                 className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
-                Back to all
+                Back to {selectedTopic ? selectedTopic : "all"}
               </button>
               <div className="flex items-center gap-3">
                 <button
@@ -149,13 +160,18 @@ export default function Home() {
               </div>
             </div>
 
-            <header className="mb-8">
-              {selectedTil.title && (
-                <h1 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                  {selectedTil.title}
-                </h1>
-              )}
-              <time className="text-sm text-gray-500 dark:text-gray-400">
+              <header className="mb-8">
+                {selectedTil.title && (
+                  <h1 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+                    {selectedTil.title}
+                  </h1>
+                )}
+                {selectedTil.topic && (
+                  <span className="mb-3 inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium capitalize text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+                    {selectedTil.topic}
+                  </span>
+                )}
+                <time className="text-sm text-gray-500 dark:text-gray-400">
                 {new Date(selectedTil.createdAt).toLocaleDateString("en-US", {
                   weekday: "long",
                   year: "numeric",

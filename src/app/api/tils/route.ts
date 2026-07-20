@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const topic = request.nextUrl.searchParams.get("topic")
 
   const where: Record<string, unknown> = { userId: session.user.id }
-  if (topic) where.tags = { has: topic }
+  if (topic) where.topic = topic
 
   const tils = await prisma.til.findMany({
     where,
@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
   const til = await prisma.til.create({
     data: {
       title: body.title ?? null,
+      topic: body.topic || null,
       raw: body.raw,
       formatted: body.formatted,
       tags: body.tags ?? [],

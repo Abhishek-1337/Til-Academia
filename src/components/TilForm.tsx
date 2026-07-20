@@ -27,6 +27,7 @@ export default function TilForm({ onSaved, onApiKeyError, initialMode, til }: Ti
 
   const [mode, setMode] = useState<Mode>(til ? "manual" : initialMode || "raw")
   const [title, setTitle] = useState(til?.title ?? "")
+  const [topic, setTopic] = useState(til?.topic ?? "")
   const [raw, setRaw] = useState(til?.raw ?? "")
   const [html, setHtml] = useState(initialHtml)
   const [tags, setTags] = useState<string[]>(til?.tags ?? [])
@@ -64,13 +65,14 @@ export default function TilForm({ onSaved, onApiKeyError, initialMode, til }: Ti
       const formatted = data.formatted
 
       if (til) {
-        await updateTil(til.id, { title: title.trim(), raw: raw.trim(), formatted, tags })
+        await updateTil(til.id, { title: title.trim(), topic: topic.trim(), raw: raw.trim(), formatted, tags })
       } else {
-        await saveTil({ title: title.trim(), raw: raw.trim(), formatted, tags })
+        await saveTil({ title: title.trim(), topic: topic.trim(), raw: raw.trim(), formatted, tags })
       }
 
       setRaw("")
       setTitle("")
+      setTopic("")
       setTags([])
       onSaved()
     } catch (err) {
@@ -94,20 +96,21 @@ export default function TilForm({ onSaved, onApiKeyError, initialMode, til }: Ti
 
     try {
       if (til) {
-        await updateTil(til.id, { title: title.trim(), raw: text, formatted: markdown, tags })
+        await updateTil(til.id, { title: title.trim(), topic: topic.trim(), raw: text, formatted: markdown, tags })
       } else {
-        await saveTil({ title: title.trim(), raw: text, formatted: markdown, tags })
+        await saveTil({ title: title.trim(), topic: topic.trim(), raw: text, formatted: markdown, tags })
       }
 
       setHtml("")
       setTitle("")
+      setTopic("")
       setTags([])
       setError("")
       onSaved()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong")
     }
-  }, [title, html, tags, til, onSaved])
+  }, [title, topic, html, tags, til, onSaved])
 
   return (
     <div className="mb-8">
@@ -124,6 +127,22 @@ export default function TilForm({ onSaved, onApiKeyError, initialMode, til }: Ti
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Give your TIL a title"
+          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+          />
+        </div>
+      <div className="mb-4">
+        <label
+          htmlFor="topic-input"
+          className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Topic
+        </label>
+        <input
+          id="topic-input"
+          type="text"
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+          placeholder="e.g. docker"
           className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
         />
       </div>
