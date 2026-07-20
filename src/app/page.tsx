@@ -5,6 +5,7 @@ import ApiKeyInput from "@/components/ApiKeyInput"
 import TilForm from "@/components/TilForm"
 import TilList from "@/components/TilList"
 import Sidebar from "@/components/Sidebar"
+import AuthButton from "@/components/AuthButton"
 import { deleteTil, getTils } from "@/lib/store"
 import { renderMarkdownToHtml } from "@/lib/markdown"
 import type { Til } from "@/lib/store"
@@ -13,6 +14,7 @@ export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [selectedTilId, setSelectedTilId] = useState<string | null>(null)
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null)
+  const [query, setQuery] = useState("")
   const [allTils, setAllTils] = useState<Til[]>([])
   const [composingMode, setComposingMode] = useState<"raw" | "manual" | null>(null)
   const [editingTilId, setEditingTilId] = useState<string | null>(null)
@@ -79,16 +81,37 @@ export default function Home() {
   const editingTil = editingTilId ? allTils.find((t) => t.id === editingTilId) ?? null : null
 
   return (
-    <div className="lg:ml-64">
-      <Sidebar
-        tils={allTils}
-        selectedTilId={selectedTilId}
-        selectedTopic={selectedTopic}
-        onSelectTil={handleSelectTil}
-        onSelectTopic={handleSelectTopic}
-        onCreateNew={handleCreateNew}
-      />
-      <main className="mx-auto max-w-5xl px-4 py-12">
+    <div>
+      <header className="sticky top-0 z-40 flex items-center gap-4 border-b border-gray-200 bg-white/90 px-6 py-3 backdrop-blur dark:border-gray-800 dark:bg-gray-900/90 lg:ml-64">
+        <div className="flex flex-1 justify-center px-4">
+          <div className="relative w-full max-w-md">
+            <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Filter TILs..."
+              className="w-full rounded-lg border-0 bg-gray-100 py-2 pl-9 pr-3 text-sm text-gray-900 shadow-sm ring-1 ring-gray-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100 dark:ring-gray-700 dark:placeholder:text-gray-500"
+            />
+          </div>
+        </div>
+        <AuthButton />
+      </header>
+
+      <div className="lg:ml-64">
+        <Sidebar
+          tils={allTils}
+          selectedTilId={selectedTilId}
+          selectedTopic={selectedTopic}
+          query={query}
+          onQueryChange={setQuery}
+          onSelectTil={handleSelectTil}
+          onSelectTopic={handleSelectTopic}
+          onCreateNew={handleCreateNew}
+        />
+        <main className="mx-auto max-w-5xl px-4 py-12">
         {composingMode ? (
           <>
             <div className="mb-6 flex items-center justify-between">
@@ -254,6 +277,7 @@ export default function Home() {
           />
         )}
       </main>
+      </div>
     </div>
   )
 }

@@ -7,6 +7,8 @@ interface SidebarProps {
   tils: Til[]
   selectedTilId: string | null
   selectedTopic: string | null
+  query: string
+  onQueryChange: (query: string) => void
   onSelectTil: (id: string | null) => void
   onSelectTopic: (topic: string | null) => void
   onCreateNew: (mode: "raw" | "manual") => void
@@ -41,11 +43,12 @@ export default function Sidebar({
   tils,
   selectedTilId,
   selectedTopic,
+  query,
+  onQueryChange,
   onSelectTil,
   onSelectTopic,
   onCreateNew,
 }: SidebarProps) {
-  const [query, setQuery] = useState("")
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null)
   const [customDate, setCustomDate] = useState("")
   const [showNewMenu, setShowNewMenu] = useState(false)
@@ -303,7 +306,7 @@ export default function Sidebar({
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => onQueryChange(e.target.value)}
             placeholder="Filter TILs..."
             className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm ring-1 ring-gray-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-100 dark:ring-gray-700 dark:placeholder:text-gray-500"
           />
@@ -391,7 +394,7 @@ export default function Sidebar({
             <input
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => onQueryChange(e.target.value)}
               placeholder="Filter TILs..."
               className="flex-1 border-0 bg-transparent py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-gray-100 dark:placeholder:text-gray-500"
             />
