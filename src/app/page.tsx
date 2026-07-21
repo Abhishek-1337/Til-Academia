@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useCallback, useEffect, useMemo } from "react"
+import { useState, useCallback, useEffect } from "react"
 import ApiKeyInput from "@/components/ApiKeyInput"
 import TilForm from "@/components/TilForm"
-import TilList from "@/components/TilList"
+import BrowseView from "@/components/BrowseView"
 import Sidebar from "@/components/Sidebar"
 import AuthButton from "@/components/AuthButton"
 import { deleteTil, getTils } from "@/lib/store"
@@ -72,10 +72,6 @@ export default function Home() {
       // ignore
     }
   }, [selectedTilId])
-
-  const sortedTils = useMemo(() => {
-    return [...allTils].sort((a, b) => b.createdAt - a.createdAt)
-  }, [allTils])
 
   const selectedTil = selectedTilId ? allTils.find((t) => t.id === selectedTilId) ?? null : null
   const editingTil = editingTilId ? allTils.find((t) => t.id === editingTilId) ?? null : null
@@ -278,43 +274,8 @@ export default function Home() {
               </details>
             )}
           </article>
-        ) : sortedTils.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="mb-6 rounded-full bg-blue-50 p-4 dark:bg-blue-900/30">
-              <svg
-                className="h-10 w-10 text-blue-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
-                />
-              </svg>
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-              Today I Learned
-            </h1>
-            <p className="mt-3 max-w-md text-base text-gray-500 dark:text-gray-400">
-              Capture and organize your daily learnings. Click &ldquo;New TIL&rdquo;
-              to create your first entry.
-            </p>
-            <button
-              onClick={() => setComposingMode("manual")}
-              className="mt-8 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-            >
-              Create your first TIL
-            </button>
-          </div>
         ) : (
-          <TilList
-            refreshKey={refreshKey}
-            selectedTopic={null}
-            onTilsChange={loadTils}
-          />
+          <BrowseView tils={allTils} onSelectTil={handleSelectTil} />
         )}
       </main>
       </div>

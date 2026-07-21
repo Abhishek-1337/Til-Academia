@@ -3,14 +3,9 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 
 export async function GET(request: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
   const topic = request.nextUrl.searchParams.get("topic")
 
-  const where: Record<string, unknown> = { userId: session.user.id }
+  const where: Record<string, unknown> = {}
   if (topic) where.topic = topic
 
   const tils = await prisma.til.findMany({
