@@ -5,6 +5,7 @@ import { getApiKey, saveTil, updateTil } from "@/lib/store"
 import type { Til } from "@/lib/store"
 import RichEditor from "./RichEditor"
 import TagInput from "./TagInput"
+import TopicCombobox from "./TopicCombobox"
 import TurndownService from "turndown"
 import { marked } from "marked"
 
@@ -27,7 +28,9 @@ export default function TilForm({ onSaved, onApiKeyError, initialMode, til }: Ti
 
   const [mode, setMode] = useState<Mode>(til ? "manual" : initialMode || "raw")
   const [title, setTitle] = useState(til?.title ?? "")
-  const [topic, setTopic] = useState(til?.topic ?? "")
+  const [topicValue, setTopicValue] = useState<{ id?: string; name: string } | null>(
+    til?.topic ? { id: til.topic.id, name: til.topic.name } : null
+  )
   const [raw, setRaw] = useState(til?.raw ?? "")
   const [html, setHtml] = useState(initialHtml)
   const [tags, setTags] = useState<string[]>(til?.tags ?? [])
@@ -64,15 +67,22 @@ export default function TilForm({ onSaved, onApiKeyError, initialMode, til }: Ti
 
       const formatted = data.formatted
 
+      const payload = { title: title.trim(), raw: raw.trim(), formatted, tags }
+      if (topicValue?.id) {
+        ;(payload as any).topicId = topicValue.id
+      } else if (topicValue?.name) {
+        ;(payload as any).topicName = topicValue.name
+      }
+
       if (til) {
-        await updateTil(til.id, { title: title.trim(), topic: topic.trim(), raw: raw.trim(), formatted, tags })
+        await updateTil(til.id, payload as any)
       } else {
-        await saveTil({ title: title.trim(), topic: topic.trim(), raw: raw.trim(), formatted, tags })
+        await saveTil(payload as any)
       }
 
       setRaw("")
       setTitle("")
-      setTopic("")
+      setTopicValue(null)
       setTags([])
       onSaved()
     } catch (err) {
@@ -95,22 +105,29 @@ export default function TilForm({ onSaved, onApiKeyError, initialMode, til }: Ti
     const markdown = turndown.turndown(html)
 
     try {
+      const payload = { title: title.trim(), raw: text, formatted: markdown, tags }
+      if (topicValue?.id) {
+        ;(payload as any).topicId = topicValue.id
+      } else if (topicValue?.name) {
+        ;(payload as any).topicName = topicValue.name
+      }
+
       if (til) {
-        await updateTil(til.id, { title: title.trim(), topic: topic.trim(), raw: text, formatted: markdown, tags })
+        await updateTil(til.id, payload as any)
       } else {
-        await saveTil({ title: title.trim(), topic: topic.trim(), raw: text, formatted: markdown, tags })
+        await saveTil(payload as any)
       }
 
       setHtml("")
       setTitle("")
-      setTopic("")
+      setTopicValue(null)
       setTags([])
       setError("")
       onSaved()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong")
     }
-  }, [title, topic, html, tags, til, onSaved])
+  }, [title, topicValue, html, tags, til, onSaved])
 
   return (
     <div className="mb-8">
@@ -131,20 +148,10 @@ export default function TilForm({ onSaved, onApiKeyError, initialMode, til }: Ti
           />
         </div>
       <div className="mb-4">
-        <label
-          htmlFor="topic-input"
-          className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
+        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
           Topic
         </label>
-        <input
-          id="topic-input"
-          type="text"
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          placeholder="e.g. docker"
-          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
-        />
+        <TopicCombobox value={topicValue} onChange={setTopicValue} />
       </div>
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="text-sm text-gray-500 dark:text-gray-400">

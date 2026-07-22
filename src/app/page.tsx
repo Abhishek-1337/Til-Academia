@@ -227,7 +227,7 @@ export default function Home() {
                 )}
                 {selectedTil.topic && (
                   <span className="mb-3 inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium capitalize text-blue-700 dark:bg-blue-900 dark:text-blue-200">
-                    {selectedTil.topic}
+                    {selectedTil.topic.name}
                   </span>
                 )}
                 <time className="text-sm text-gray-500 dark:text-gray-400">

@@ -23,7 +23,7 @@ export default function BrowseView({ tils, onSelectTil }: BrowseViewProps) {
   const grouped = useMemo(() => {
     const map = new Map<string, Til[]>()
     for (const til of sorted) {
-      const key = normalizeTopic(til.topic)
+      const key = normalizeTopic(til.topic?.name)
       if (!map.has(key)) map.set(key, [])
       map.get(key)!.push(til)
     }

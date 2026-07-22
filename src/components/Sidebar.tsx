@@ -114,7 +114,7 @@ export default function Sidebar({
     return result.filter((til) => {
       if (
         (til.title && til.title.toLowerCase().includes(q)) ||
-        (til.topic && til.topic.toLowerCase().includes(q)) ||
+        (til.topic?.name && til.topic.name.toLowerCase().includes(q)) ||
         til.raw.toLowerCase().includes(q) ||
         til.formatted.toLowerCase().includes(q) ||
         til.tags.some((tag) => tag.toLowerCase().includes(q))
@@ -137,7 +137,7 @@ export default function Sidebar({
   const topics = useMemo(() => {
     const map = new Map<string, Til[]>()
     for (const til of filtered) {
-      const key = normalizeTopic(til.topic)
+      const key = normalizeTopic(til.topic?.name)
       if (!map.has(key)) map.set(key, [])
       map.get(key)!.push(til)
     }
