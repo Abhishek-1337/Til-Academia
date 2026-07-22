@@ -183,17 +183,17 @@ export default function Sidebar({
                     onClick={() => onSelectTil(til.id)}
                     className={`relative flex w-full flex-col gap-0.5 rounded-md border-b border-gray-100 px-3 py-2 text-left text-sm transition-colors last:border-0 dark:border-gray-800/60 ${
                       isSelected
-                        ? "bg-blue-50 dark:bg-blue-900/30"
+                        ? "bg-amber-50 dark:bg-amber-900/20"
                         : "hover:bg-gray-100 dark:hover:bg-white/[0.04]"
                     }`}
                   >
                     {isSelected && (
-                      <span className="absolute inset-y-0 left-0 w-0.5 rounded-r-full bg-blue-600 dark:bg-blue-400" />
+                      <span className="absolute inset-y-0 left-0 w-0.5 rounded-r-full bg-amber-500 dark:bg-amber-400" />
                     )}
                     <span
                       className={`block truncate text-sm font-medium leading-snug ${
                         isSelected
-                          ? "text-blue-800 dark:text-blue-200"
+                          ? "text-amber-800 dark:text-amber-200"
                           : "text-gray-800 dark:text-gray-200"
                       }`}
                     >
