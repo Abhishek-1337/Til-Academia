@@ -10,6 +10,7 @@ interface SidebarProps {
   query: string
   onSelectTil: (id: string | null) => void
   onSelectTopic: (topic: string | null) => void
+  onCreateNew: (mode: "raw" | "manual") => void
 }
 
 const MS_PER_DAY = 86400000
@@ -44,6 +45,7 @@ export default function Sidebar({
   query,
   onSelectTil,
   onSelectTopic,
+  onCreateNew,
 }: SidebarProps) {
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null)
   const [customDate, setCustomDate] = useState("")
@@ -314,6 +316,19 @@ export default function Sidebar({
             <div className="space-y-0.5">{renderTopicList()}</div>
           )}
         </nav>
+        <div className="border-t border-gray-200 px-2 py-3 dark:border-gray-800">
+          <div className="relative">
+            <button
+              onClick={() => onCreateNew("raw")}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              New TIL
+            </button>
+          </div>
+        </div>
       </aside>
 
       {/* mobile view */}
@@ -400,6 +415,15 @@ export default function Sidebar({
         ) : (
           <div className="space-y-1">{renderTopicList()}</div>
         )}
+        <button
+          onClick={() => onCreateNew("raw")}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          New TIL
+        </button>
       </div>
     </>
   )

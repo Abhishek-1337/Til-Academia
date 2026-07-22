@@ -76,8 +76,6 @@ export default function Home() {
   const selectedTil = selectedTilId ? allTils.find((t) => t.id === selectedTilId) ?? null : null
   const editingTil = editingTilId ? allTils.find((t) => t.id === editingTilId) ?? null : null
 
-  const [showNewMenu, setShowNewMenu] = useState(false)
-
   return (
     <div>
       <header className="sticky top-0 z-40 flex items-center gap-4 border-b border-gray-200 bg-white/90 px-6 py-3 backdrop-blur dark:border-gray-800 dark:bg-gray-900/90 lg:ml-64">
@@ -106,52 +104,9 @@ export default function Home() {
           query={query}
           onSelectTil={handleSelectTil}
           onSelectTopic={handleSelectTopic}
+          onCreateNew={handleCreateNew}
         />
         <main className="mx-auto max-w-5xl px-4 py-12">
-          {!composingMode && !editingTil && (
-            <div className="mb-6 flex justify-end">
-              <div className="relative">
-                <button
-                  onClick={() => setShowNewMenu(!showNewMenu)}
-                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                  </svg>
-                  New TIL
-                </button>
-                {showNewMenu && (
-                  <div className="absolute right-0 top-full z-50 mt-1 w-56 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
-                    <button
-                      onClick={() => { handleCreateNew("raw"); setShowNewMenu(false) }}
-                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                    >
-                      <svg className="h-4 w-4 shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                      <div>
-                        <div className="font-medium">AI Parse</div>
-                        <div className="text-xs text-gray-400">Paste raw notes, get formatted Markdown</div>
-                      </div>
-                    </button>
-                    <div className="border-t border-gray-100 dark:border-gray-800" />
-                    <button
-                      onClick={() => { handleCreateNew("manual"); setShowNewMenu(false) }}
-                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                    >
-                      <svg className="h-4 w-4 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      <div>
-                        <div className="font-medium">Manual Entry</div>
-                        <div className="text-xs text-gray-400">Write with the rich text editor</div>
-                      </div>
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         {composingMode ? (
           <>
             <div className="mb-6 flex items-center justify-between">
