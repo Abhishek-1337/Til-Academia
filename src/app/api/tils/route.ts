@@ -29,10 +29,10 @@ export async function POST(request: NextRequest) {
   if (!topicId && body.topicName) {
     const topic = await prisma.topic.upsert({
       where: {
-        userId_name: { userId: session.user.id, name: body.topicName.trim().toLowerCase() },
+        userId_name: { userId: session.user.id, name: body.topicName.trim() },
       },
       create: {
-        name: body.topicName.trim().toLowerCase(),
+        name: body.topicName.trim(),
         userId: session.user.id,
       },
       update: {},

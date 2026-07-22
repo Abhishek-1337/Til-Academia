@@ -36,10 +36,10 @@ export async function POST(request: NextRequest) {
 
   const topic = await prisma.topic.upsert({
     where: {
-      userId_name: { userId: session.user.id, name: name.trim().toLowerCase() },
+      userId_name: { userId: session.user.id, name: name.trim() },
     },
     create: {
-      name: name.trim().toLowerCase(),
+      name: name.trim(),
       userId: session.user.id,
     },
     update: {},

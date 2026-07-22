@@ -96,13 +96,13 @@ export default function TopicCombobox({ value, onChange }: TopicComboboxProps) {
                       : "text-gray-700 dark:text-gray-300"
                   }`}
                 >
-                  <span className="capitalize">{topic.name}</span>
+                  <span>{topic.name}</span>
                 </button>
               ))}
               {search && !exactMatch && (
                 <button
                   onClick={() => {
-                    onChange({ name: search.trim().toLowerCase() })
+                    onChange({ name: search.trim() })
                     setOpen(false)
                   }}
                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
@@ -110,7 +110,7 @@ export default function TopicCombobox({ value, onChange }: TopicComboboxProps) {
                   <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                   </svg>
-                  Create &ldquo;{search.trim().toLowerCase()}&rdquo;
+                  Create &ldquo;{search.trim()}&rdquo;
                 </button>
               )}
               {!search && !loading && topics.length === 0 && (
