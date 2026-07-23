@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useMemo } from "react"
+import { useSession } from "next-auth/react"
 import type { Til } from "@/lib/store"
 
 interface SidebarProps {
@@ -47,6 +48,7 @@ export default function Sidebar({
   onSelectTopic,
   onCreateNew,
 }: SidebarProps) {
+  const { data: session } = useSession()
   const [dateFilter, setDateFilter] = useState<DateFilter | null>(null)
   const [customDate, setCustomDate] = useState("")
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -317,48 +319,50 @@ export default function Sidebar({
             <div className="space-y-0.5">{renderTopicList()}</div>
           )}
         </nav>
-        <div className="border-t border-gray-200 px-2 py-3 dark:border-gray-800">
-          <div className="relative">
-            <button
-              onClick={() => setShowNewMenu(!showNewMenu)}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              New TIL
-            </button>
-            {showNewMenu && (
-              <div className="absolute bottom-full left-0 right-0 z-50 mb-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
-                <button
-                  onClick={() => { onCreateNew("raw"); setShowNewMenu(false) }}
-                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                >
-                  <svg className="h-4 w-4 shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <div>
-                    <div className="font-medium">AI Parse</div>
-                    <div className="text-xs text-gray-400">Paste raw notes, get formatted Markdown</div>
-                  </div>
-                </button>
-                <div className="border-t border-gray-100 dark:border-gray-800" />
-                <button
-                  onClick={() => { onCreateNew("manual"); setShowNewMenu(false) }}
-                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                >
-                  <svg className="h-4 w-4 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  <div>
-                    <div className="font-medium">Manual Entry</div>
-                    <div className="text-xs text-gray-400">Write with the rich text editor</div>
-                  </div>
-                </button>
-              </div>
-            )}
+        {session && (
+          <div className="border-t border-gray-200 px-2 py-3 dark:border-gray-800">
+            <div className="relative">
+              <button
+                onClick={() => setShowNewMenu(!showNewMenu)}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                New TIL
+              </button>
+              {showNewMenu && (
+                <div className="absolute bottom-full left-0 right-0 z-50 mb-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                  <button
+                    onClick={() => { onCreateNew("raw"); setShowNewMenu(false) }}
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                  >
+                    <svg className="h-4 w-4 shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <div>
+                      <div className="font-medium">AI Parse</div>
+                      <div className="text-xs text-gray-400">Paste raw notes, get formatted Markdown</div>
+                    </div>
+                  </button>
+                  <div className="border-t border-gray-100 dark:border-gray-800" />
+                  <button
+                    onClick={() => { onCreateNew("manual"); setShowNewMenu(false) }}
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                  >
+                    <svg className="h-4 w-4 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <div>
+                      <div className="font-medium">Manual Entry</div>
+                      <div className="text-xs text-gray-400">Write with the rich text editor</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </aside>
 
       {/* mobile view */}
@@ -445,46 +449,48 @@ export default function Sidebar({
         ) : (
           <div className="space-y-1">{renderTopicList()}</div>
         )}
-        <div className="relative mt-4">
-          <button
-            onClick={() => setShowNewMenu(!showNewMenu)}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            New TIL
-          </button>
-          {showNewMenu && (
-            <div className="absolute bottom-full left-0 right-0 z-50 mb-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
-              <button
-                onClick={() => { onCreateNew("raw"); setShowNewMenu(false) }}
-                className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-              >
-                <svg className="h-4 w-4 shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <div>
-                  <div className="font-medium">AI Parse</div>
-                  <div className="text-xs text-gray-400">Paste raw notes, get formatted Markdown</div>
-                </div>
-              </button>
-              <div className="border-t border-gray-100 dark:border-gray-800" />
-              <button
-                onClick={() => { onCreateNew("manual"); setShowNewMenu(false) }}
-                className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-              >
-                <svg className="h-4 w-4 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15Hv-2.828l8.586-8.586z" />
-                </svg>
-                <div>
-                  <div className="font-medium">Manual Entry</div>
-                  <div className="text-xs text-gray-400">Write with the rich text editor</div>
-                </div>
-              </button>
-            </div>
-          )}
-        </div>
+        {session && (
+          <div className="relative mt-4">
+            <button
+              onClick={() => setShowNewMenu(!showNewMenu)}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              New TIL
+            </button>
+            {showNewMenu && (
+              <div className="absolute bottom-full left-0 right-0 z-50 mb-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                <button
+                  onClick={() => { onCreateNew("raw"); setShowNewMenu(false) }}
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  <svg className="h-4 w-4 shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <div>
+                    <div className="font-medium">AI Parse</div>
+                    <div className="text-xs text-gray-400">Paste raw notes, get formatted Markdown</div>
+                  </div>
+                </button>
+                <div className="border-t border-gray-100 dark:border-gray-800" />
+                <button
+                  onClick={() => { onCreateNew("manual"); setShowNewMenu(false) }}
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  <svg className="h-4 w-4 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15Hv-2.828l8.586-8.586z" />
+                  </svg>
+                  <div>
+                    <div className="font-medium">Manual Entry</div>
+                    <div className="text-xs text-gray-400">Write with the rich text editor</div>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </>
   )

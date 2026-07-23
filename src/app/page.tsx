@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import ApiKeyInput from "@/components/ApiKeyInput"
 import TilForm from "@/components/TilForm"
 import BrowseView from "@/components/BrowseView"
@@ -11,6 +12,7 @@ import { renderMarkdownToHtml } from "@/lib/markdown"
 import type { Til } from "@/lib/store"
 
 export default function Home() {
+  const { data: session } = useSession()
   const [refreshKey, setRefreshKey] = useState(0)
   const [selectedTilId, setSelectedTilId] = useState<string | null>(null)
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null)
@@ -162,20 +164,22 @@ export default function Home() {
                 </svg>
                 Back to {selectedTopic ? selectedTopic : "all"}
               </button>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => handleEditTil(selectedTil.id)}
-                  className="text-xs text-blue-500 underline hover:text-blue-700"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteTil(selectedTil.id)}
-                  className="text-xs text-red-400 underline hover:text-red-600"
-                >
-                  Delete
-                </button>
-              </div>
+              {session && (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleEditTil(selectedTil.id)}
+                    className="text-xs text-blue-500 underline hover:text-blue-700"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteTil(selectedTil.id)}
+                    className="text-xs text-red-400 underline hover:text-red-600"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
             </div>
 
               <header className="mb-8">

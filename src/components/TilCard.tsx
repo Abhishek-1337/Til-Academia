@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useSession } from "next-auth/react"
 import type { Til } from "@/lib/store"
 import { renderMarkdownToHtml } from "@/lib/markdown"
 
@@ -10,6 +11,7 @@ interface TilCardProps {
 }
 
 export default function TilCard({ til, onDelete }: TilCardProps) {
+  const { data: session } = useSession()
   const [deleting, setDeleting] = useState(false)
   const [showRaw, setShowRaw] = useState(false)
 
@@ -43,12 +45,14 @@ export default function TilCard({ til, onDelete }: TilCardProps) {
           >
             {showRaw ? "Hide raw" : "Show raw"}
           </button>
-          <button
-            onClick={handleDelete}
-            className="text-xs text-red-400 underline hover:text-red-600"
-          >
-            Delete
-          </button>
+          {session && (
+            <button
+              onClick={handleDelete}
+              className="text-xs text-red-400 underline hover:text-red-600"
+            >
+              Delete
+            </button>
+          )}
         </div>
       </div>
 
