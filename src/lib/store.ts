@@ -21,9 +21,12 @@ export async function getTil(id: string): Promise<Til> {
   return res.json()
 }
 
-export async function getTils(topic?: string | null): Promise<Til[]> {
-  const params = topic ? `?topic=${encodeURIComponent(topic)}` : ""
-  const res = await fetch(`/api/tils${params}`)
+export async function getTils(topic?: string | null, username?: string | null): Promise<Til[]> {
+  const params = new URLSearchParams()
+  if (topic) params.set("topic", topic)
+  if (username) params.set("username", username)
+  const qs = params.toString()
+  const res = await fetch(`/api/tils${qs ? `?${qs}` : ""}`)
   if (!res.ok) throw new Error("Failed to fetch TILs")
   return res.json()
 }

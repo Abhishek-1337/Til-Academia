@@ -11,7 +11,7 @@ interface SidebarProps {
   query: string
   onSelectTil: (id: string | null) => void
   onSelectTopic: (topic: string | null) => void
-  onCreateNew: (mode: "raw" | "manual") => void
+  onCreateNew?: (mode: "raw" | "manual") => void
 }
 
 const MS_PER_DAY = 86400000
@@ -319,7 +319,7 @@ export default function Sidebar({
             <div className="space-y-0.5">{renderTopicList()}</div>
           )}
         </nav>
-        {session && (
+        {session && onCreateNew && (
           <div className="border-t border-gray-200 px-2 py-3 dark:border-gray-800">
             <div className="relative">
               <button
@@ -449,7 +449,7 @@ export default function Sidebar({
         ) : (
           <div className="space-y-1">{renderTopicList()}</div>
         )}
-        {session && (
+        {session && onCreateNew && (
           <div className="relative mt-4">
             <button
               onClick={() => setShowNewMenu(!showNewMenu)}
