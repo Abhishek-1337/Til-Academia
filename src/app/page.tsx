@@ -1,30 +1,14 @@
 "use client"
 
-import { signIn, signOut, useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { signIn } from "next-auth/react"
+import { useSession } from "next-auth/react"
+import ProfileContent from "@/components/ProfileContent"
 
 export default function Home() {
   const { data: session } = useSession()
-  const router = useRouter()
 
-  useEffect(() => {
-    if (session?.user?.id) {
-      router.push(`/${session.user.id}`)
-    }
-  }, [session, router])
-
-  if (session) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-white dark:bg-gray-900">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-          Today I Learned
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 mb-6">
-          Loading your profile...
-        </p>
-      </div>
-    )
+  if (session?.user?.id) {
+    return <ProfileContent userId={session.user.id} isOwnProfile={true} />
   }
 
   return (

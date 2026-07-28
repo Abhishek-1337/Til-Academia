@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { useParams } from "next/navigation"
 import ApiKeyInput from "@/components/ApiKeyInput"
 import TilForm from "@/components/TilForm"
 import BrowseView from "@/components/BrowseView"
@@ -12,11 +11,13 @@ import { deleteTil, getTils } from "@/lib/store"
 import { renderMarkdownToHtml } from "@/lib/markdown"
 import type { Til } from "@/lib/store"
 
-export default function UserTilsPage() {
-  const params = useParams<{ id: string }>()
+interface ProfileContentProps {
+  userId: string
+  isOwnProfile: boolean
+}
+
+export default function ProfileContent({ userId, isOwnProfile }: ProfileContentProps) {
   const { data: session } = useSession()
-  const userId = params.id
-  const isOwnProfile = session?.user?.id === userId
   const [refreshKey, setRefreshKey] = useState(0)
   const [selectedTilId, setSelectedTilId] = useState<string | null>(null)
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null)
@@ -87,9 +88,6 @@ export default function UserTilsPage() {
     <div>
       <header className="sticky top-0 z-40 flex items-center gap-4 border-b border-gray-200 bg-white/90 px-6 py-3 backdrop-blur dark:border-gray-800 dark:bg-gray-900/90 lg:ml-64">
         <div className="flex flex-1 items-center gap-3">
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {profileName}
-          </h1>
           <span className="text-xs text-gray-400 dark:text-gray-500">
             {allTils.length} TIL{allTils.length !== 1 ? "s" : ""}
           </span>
