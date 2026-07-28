@@ -15,6 +15,12 @@ export interface Topic {
   createdAt: number
 }
 
+export async function getTil(id: string): Promise<Til> {
+  const res = await fetch(`/api/tils/${id}`)
+  if (!res.ok) throw new Error("Failed to fetch TIL")
+  return res.json()
+}
+
 export async function getTils(topic?: string | null): Promise<Til[]> {
   const params = topic ? `?topic=${encodeURIComponent(topic)}` : ""
   const res = await fetch(`/api/tils${params}`)

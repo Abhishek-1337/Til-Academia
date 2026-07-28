@@ -167,6 +167,15 @@ export default function Home() {
               {session && (
                 <div className="flex items-center gap-3">
                   <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.origin + "/til/" + selectedTil.id)
+                      alert("Link copied!")
+                    }}
+                    className="text-xs text-gray-400 underline hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    Copy Link
+                  </button>
+                  <button
                     onClick={() => handleEditTil(selectedTil.id)}
                     className="text-xs text-blue-500 underline hover:text-blue-700"
                   >
