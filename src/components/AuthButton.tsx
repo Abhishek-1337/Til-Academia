@@ -32,7 +32,7 @@ export default function AuthButton() {
             <div className="rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(window.location.origin + "/" + session.user?.name)
+                  navigator.clipboard.writeText(window.location.origin + window.location.pathname)
                   alert("Profile link copied!")
                   setMenuOpen(false)
                 }}

@@ -4,21 +4,16 @@ import { auth } from "@/lib/auth"
 
 export async function GET(request: NextRequest) {
   const topic = request.nextUrl.searchParams.get("topic")
-  const username = request.nextUrl.searchParams.get("username")
+  const userId = request.nextUrl.searchParams.get("userId")
 
   const where: Record<string, unknown> = {}
   if (topic) where.topic = { name: topic }
-
-  const include: Record<string, unknown> = { topic: true }
-  if (username) {
-    where.user = { name: username }
-    include.user = { select: { name: true, image: true } }
-  }
+  if (userId) where.userId = userId
 
   const tils = await prisma.til.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    include,
+    include: { topic: true, user: { select: { name: true } } },
   })
 
   return NextResponse.json(tils)

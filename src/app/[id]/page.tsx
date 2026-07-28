@@ -13,10 +13,10 @@ import { renderMarkdownToHtml } from "@/lib/markdown"
 import type { Til } from "@/lib/store"
 
 export default function UserTilsPage() {
-  const params = useParams<{ username: string }>()
+  const params = useParams<{ id: string }>()
   const { data: session } = useSession()
-  const username = params.username
-  const isOwnProfile = session?.user?.name === username
+  const userId = params.id
+  const isOwnProfile = session?.user?.id === userId
   const [refreshKey, setRefreshKey] = useState(0)
   const [selectedTilId, setSelectedTilId] = useState<string | null>(null)
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null)
@@ -28,12 +28,12 @@ export default function UserTilsPage() {
 
   const loadTils = useCallback(async () => {
     try {
-      const tils = await getTils(null, username)
+      const tils = await getTils(null, userId)
       setAllTils(tils)
     } catch {
       // ignore
     }
-  }, [username])
+  }, [userId])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -81,13 +81,14 @@ export default function UserTilsPage() {
 
   const selectedTil = selectedTilId ? allTils.find((t) => t.id === selectedTilId) ?? null : null
   const editingTil = editingTilId ? allTils.find((t) => t.id === editingTilId) ?? null : null
+  const profileName = allTils[0]?.user?.name ?? userId
 
   return (
     <div>
       <header className="sticky top-0 z-40 flex items-center gap-4 border-b border-gray-200 bg-white/90 px-6 py-3 backdrop-blur dark:border-gray-800 dark:bg-gray-900/90 lg:ml-64">
         <div className="flex flex-1 items-center gap-3">
           <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {username}
+            {profileName}
           </h1>
           <span className="text-xs text-gray-400 dark:text-gray-500">
             {allTils.length} TIL{allTils.length !== 1 ? "s" : ""}

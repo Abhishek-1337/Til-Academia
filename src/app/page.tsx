@@ -1,10 +1,18 @@
 "use client"
 
-import { signIn, signOut } from "next-auth/react"
-import { useSession } from "next-auth/react"
+import { signIn, signOut, useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 export default function Home() {
   const { data: session } = useSession()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      router.push(`/${session.user.id}`)
+    }
+  }, [session, router])
 
   if (session) {
     return (
@@ -12,19 +20,9 @@ export default function Home() {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
           Today I Learned
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 mb-2">
-          Signed in as{" "}
-          <span className="font-medium">{session.user?.name}</span>
-        </p>
         <p className="text-gray-500 dark:text-gray-400 mb-6">
-          Visit your profile to view and manage your TILs.
+          Loading your profile...
         </p>
-        <button
-          onClick={() => signOut()}
-          className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
-        >
-          Sign out
-        </button>
       </div>
     )
   }

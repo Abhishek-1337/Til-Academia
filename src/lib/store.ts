@@ -3,6 +3,7 @@ export interface Til {
   title?: string | null
   topicId?: string | null
   topic?: { id: string; name: string } | null
+  user?: { name: string } | null
   raw: string
   formatted: string
   tags: string[]
@@ -21,10 +22,10 @@ export async function getTil(id: string): Promise<Til> {
   return res.json()
 }
 
-export async function getTils(topic?: string | null, username?: string | null): Promise<Til[]> {
+export async function getTils(topic?: string | null, userId?: string | null): Promise<Til[]> {
   const params = new URLSearchParams()
   if (topic) params.set("topic", topic)
-  if (username) params.set("username", username)
+  if (userId) params.set("userId", userId)
   const qs = params.toString()
   const res = await fetch(`/api/tils${qs ? `?${qs}` : ""}`)
   if (!res.ok) throw new Error("Failed to fetch TILs")
