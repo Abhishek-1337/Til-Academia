@@ -2,29 +2,53 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { signIn, signOut, useSession } from "next-auth/react"
+import { useState } from "react"
 
 export default function AuthButton() {
   const { data: session } = useSession()
+  const [menuOpen, setMenuOpen] = useState(false)
 
   if (session) {
     return (
-      <div className="flex items-center gap-3">
-        {session.user?.image && (
-          <img
-            src={session.user.image}
-            alt=""
-            className="h-8 w-8 rounded-full"
-          />
+      <div
+        className="relative"
+        onMouseEnter={() => setMenuOpen(true)}
+        onMouseLeave={() => setMenuOpen(false)}
+      >
+        <div className="flex items-center gap-2 cursor-pointer">
+          {session.user?.image && (
+            <img
+              src={session.user.image}
+              alt=""
+              className="h-8 w-8 rounded-full"
+            />
+          )}
+          <span className="hidden text-sm text-gray-700 dark:text-gray-300 sm:inline">
+            {session.user?.name}
+          </span>
+        </div>
+        {menuOpen && (
+          <div className="absolute right-0 top-full z-50">
+            <div className="rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.origin + "/" + session.user?.name)
+                  alert("Profile link copied!")
+                  setMenuOpen(false)
+                }}
+                className="block w-full whitespace-nowrap px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                Share Profile
+              </button>
+              <button
+                onClick={() => signOut()}
+                className="block w-full whitespace-nowrap px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
         )}
-        <span className="hidden text-sm text-gray-700 dark:text-gray-300 sm:inline">
-          {session.user?.name}
-        </span>
-        <button
-          onClick={() => signOut()}
-          className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-        >
-          Sign out
-        </button>
       </div>
     )
   }
@@ -32,7 +56,7 @@ export default function AuthButton() {
   return (
     <button
       onClick={() => signIn("google")}
-      className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+      className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
     >
       <svg className="h-5 w-5" viewBox="0 0 24 24">
         <path
