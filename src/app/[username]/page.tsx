@@ -10,5 +10,5 @@ export default function UserTilsPage() {
   const userId = params.username
   const isOwnProfile = session?.user?.id === userId
 
-  return <ProfileContent userId={userId} isOwnProfile={isOwnProfile} />
+  return <ProfileContent key={userId} userId={userId} isOwnProfile={isOwnProfile} />
 }

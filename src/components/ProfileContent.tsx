@@ -7,7 +7,7 @@ import TilForm from "@/components/TilForm"
 import BrowseView from "@/components/BrowseView"
 import Sidebar from "@/components/Sidebar"
 import AuthButton from "@/components/AuthButton"
-import { deleteTil, getTils } from "@/lib/store"
+import { cacheTils, deleteTil, getCachedTils, getTils } from "@/lib/store"
 import { renderMarkdownToHtml } from "@/lib/markdown"
 import type { Til } from "@/lib/store"
 
@@ -22,7 +22,8 @@ export default function ProfileContent({ userId, isOwnProfile }: ProfileContentP
   const [selectedTilId, setSelectedTilId] = useState<string | null>(null)
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null)
   const [query, setQuery] = useState("")
-  const [allTils, setAllTils] = useState<Til[]>([])
+  const [allTils, setAllTils] = useState<Til[]>(() => getCachedTils(userId) ?? [])
+  const [loading, setLoading] = useState(true)
   const [composingMode, setComposingMode] = useState<"raw" | "manual" | null>(null)
   const [editingTilId, setEditingTilId] = useState<string | null>(null)
   const [apiKeyResetKey, setApiKeyResetKey] = useState(0)
@@ -31,8 +32,11 @@ export default function ProfileContent({ userId, isOwnProfile }: ProfileContentP
     try {
       const tils = await getTils(null, userId)
       setAllTils(tils)
+      cacheTils(userId, tils)
     } catch {
       // ignore
+    } finally {
+      setLoading(false)
     }
   }, [userId])
 
@@ -71,14 +75,16 @@ export default function ProfileContent({ userId, isOwnProfile }: ProfileContentP
   const handleDeleteTil = useCallback(async (id: string) => {
     try {
       await deleteTil(id)
-      setAllTils((prev) => prev.filter((t) => t.id !== id))
+      const next = allTils.filter((t) => t.id !== id)
+      setAllTils(next)
+      cacheTils(userId, next)
       if (selectedTilId === id) {
         setSelectedTilId(null)
       }
     } catch {
       // ignore
     }
-  }, [selectedTilId])
+  }, [allTils, selectedTilId, userId])
 
   const selectedTil = selectedTilId ? allTils.find((t) => t.id === selectedTilId) ?? null : null
   const editingTil = editingTilId ? allTils.find((t) => t.id === editingTilId) ?? null : null
@@ -120,7 +126,15 @@ export default function ProfileContent({ userId, isOwnProfile }: ProfileContentP
           onCreateNew={isOwnProfile ? handleCreateNew : undefined}
         />
         <main className="mx-auto max-w-5xl px-4 py-12">
-        {composingMode ? (
+        {loading && allTils.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-24">
+            <svg className="h-8 w-8 animate-spin text-blue-600" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            <p className="text-sm text-gray-400 dark:text-gray-500">Loading your TILs...</p>
+          </div>
+        ) : composingMode ? (
           <>
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">

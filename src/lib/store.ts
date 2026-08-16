@@ -32,6 +32,27 @@ export async function getTils(topic?: string | null, userId?: string | null): Pr
   return res.json()
 }
 
+const TILS_CACHE_PREFIX = "tils_cache_"
+
+export function getCachedTils(userId: string): Til[] | null {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = localStorage.getItem(TILS_CACHE_PREFIX + userId)
+    return raw ? (JSON.parse(raw) as Til[]) : null
+  } catch {
+    return null
+  }
+}
+
+export function cacheTils(userId: string, tils: Til[]) {
+  if (typeof window === "undefined") return
+  try {
+    localStorage.setItem(TILS_CACHE_PREFIX + userId, JSON.stringify(tils))
+  } catch {
+    // ignore
+  }
+}
+
 export async function saveTil(data: {
   title?: string | null
   topicId?: string | null
