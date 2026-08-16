@@ -5,7 +5,15 @@ import { useSession } from "next-auth/react"
 import ProfileContent from "@/components/ProfileContent"
 
 export default function Home() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
+
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-gray-900">
+        <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+      </div>
+    )
+  }
 
   if (session?.user?.id) {
     return <ProfileContent userId={session.user.id} isOwnProfile={true} />
