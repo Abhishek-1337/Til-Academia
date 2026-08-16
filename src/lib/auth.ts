@@ -9,11 +9,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: "/",
   },
-  // basePath: `${process.env.NEXTAUTH_URL}/api/auth`,
-  // basePath: `http://localme/api/auth`,
+  session: {
+    strategy: "jwt",
+  },
   callbacks: {
-    session({ session, user }) {
-      session.user.id = user.id
+    session({ session, token }) {
+      if (token.sub) session.user.id = token.sub
       return session
     },
   },
