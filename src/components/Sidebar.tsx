@@ -6,6 +6,7 @@ import type { Til } from "@/lib/store"
 
 interface SidebarProps {
   tils: Til[]
+  loading?: boolean
   selectedTilId: string | null
   selectedTopic: string | null
   query: string
@@ -41,6 +42,7 @@ function normalizeTopic(topic: string | null | undefined): string {
 
 export default function Sidebar({
   tils,
+  loading,
   selectedTilId,
   selectedTopic,
   query,
@@ -312,9 +314,19 @@ export default function Sidebar({
 
         <nav className="flex-1 overflow-y-auto px-2 py-2">
           {topics.length === 0 ? (
-            <p className="px-3 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
-              {query ? "No TILs match your filter." : "No entries saved yet."}
-            </p>
+            loading ? (
+              <div className="flex items-center justify-center gap-2 px-3 py-8 text-sm text-gray-400 dark:text-gray-500">
+                <svg className="h-4 w-4 animate-spin text-blue-500" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Loading...
+              </div>
+            ) : (
+              <p className="px-3 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+                {query ? "No TILs match your filter." : "No entries saved yet."}
+              </p>
+            )
           ) : (
             <div className="space-y-0.5">{renderTopicList()}</div>
           )}
@@ -443,9 +455,19 @@ export default function Sidebar({
           </div>
         )}
         {topics.length === 0 ? (
-          <p className="px-3 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
-            {query ? "No TILs match your filter." : "No entries saved yet."}
-          </p>
+          loading ? (
+            <div className="flex items-center justify-center gap-2 py-8 text-sm text-gray-400 dark:text-gray-500">
+              <svg className="h-4 w-4 animate-spin text-blue-500" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Loading...
+            </div>
+          ) : (
+            <p className="px-3 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+              {query ? "No TILs match your filter." : "No entries saved yet."}
+            </p>
+          )
         ) : (
           <div className="space-y-1">{renderTopicList()}</div>
         )}

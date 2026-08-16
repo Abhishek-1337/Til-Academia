@@ -118,6 +118,7 @@ export default function ProfileContent({ userId, isOwnProfile }: ProfileContentP
       <div className="lg:ml-64">
         <Sidebar
           tils={allTils}
+          loading={loading}
           selectedTilId={selectedTilId}
           selectedTopic={selectedTopic}
           query={query}
